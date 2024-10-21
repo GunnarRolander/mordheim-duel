@@ -84,10 +84,6 @@ function App() {
     return armour_save_target
   }
 
-  const parry = function (attacker_roll, defender_roll) {
-      return attacker_roll < defender_roll
-  }
-
   const injury = function (injury_roll) {
       if (injury_roll == 1 || injury_roll == 2) {
           return "knocked down"
@@ -143,6 +139,7 @@ function App() {
   }
 
   const simulateCombat = function (warrior_1_base, warrior_2_base) {
+    const debug = true
     // const warrior_1 = {...warrior_1_base}
     // const warrior_2 = {...warrior_2_base}
 
@@ -167,8 +164,8 @@ function App() {
 
       const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender) : {}
       const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker) : {}
-
-      if (attacker.status == "out of action" || defender.status == "out of action") {
+      if (debug) console.log("End of round statuses", warrior_1.status, warrior_2.status, "fight done?", warrior_1.status == "out of action" || warrior_2.status == "out of action")
+      if (warrior_1.status == "out of action" || warrior_2.status == "out of action") {
         fight_done = true
         // console.log("Fight over in round " + round_number)
       }
@@ -181,26 +178,63 @@ function App() {
 }
 
   const fightCombatRound = function (attacker, defender) {
+    const debug = true
     let main_weapon = attacker.weapons[0]
     let offhand_weapon = attacker.weapons[1]
+
+    if (debug) console.log("weapons", main_weapon, offhand_weapon)
 
     let main_hits = 0
     let offhand_hits = 0
     let main_to_hit_roll = []
     let offhand_to_hit_roll = []
+    let parry_roll = []
     if (defender.status == "knocked down" || defender.status == "stunned") {
         main_hits = attacker.attacks
         main_to_hit_roll = ['auto hit']
+        if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
+
         if (offhand_weapon) {
           offhand_to_hit_roll = ['auto hit']
           offhand_hits = 1
+          if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
         }
     } else {
       main_to_hit_roll = rollDice(attacker.attacks)
       main_hits = main_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
 
+      if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
+
       offhand_to_hit_roll = offhand_weapon ? rollDice(1) : []
       offhand_hits = offhand_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
+
+      if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
+
+      const parry_weapons = defender.weapons.filter((weapon) => weapon.tags.includes('parry'))
+      const parry_armour = defender.armour.filter((armour) => armour.tags.includes('parry'))
+      if (debug) console.log("parry equipment", parry_weapons, parry_armour)
+
+      const combined_parry_equipment = [...parry_weapons, ...parry_armour]
+      const combined_hit_roll = [...main_to_hit_roll, ...offhand_to_hit_roll]
+      const max_hit_roll = Math.max(...combined_hit_roll)
+      if (debug) console.log("max hit roll", max_hit_roll)
+
+      // If the defender has at least one weapon or armour with the parry tag, allow parry
+      if (debug) console.log("parry conditions", combined_parry_equipment.length > 0, max_hit_roll != 6, !combined_hit_roll.includes('auto hit'))
+      if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && !combined_hit_roll.includes('auto hit')) {
+        // If the defender has more than two weapons or armours with the parry tag, check for reroll parry tag and roll 2 dice
+        parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? Math.max(...rollDice(2)) : rollDice(1)
+        if (debug) console.log("parry procced", parry_roll)
+        const parry_successful = parry_roll > max_hit_roll
+        if (main_to_hit_roll.includes(max_hit_roll) && parry_successful) {
+          main_hits -= main_hits > 0 ? 1 : 0
+          if (debug) console.log("main parry successful", main_hits)
+        } else if (parry_successful){
+          offhand_hits -= offhand_hits > 0 ? 1 : 0
+          if (debug) console.log("offhand parry successful", offhand_hits)
+        }
+      }
+
     }
 
     // To Wound
@@ -216,26 +250,33 @@ function App() {
       main_wound_roll = ['coup de grace']
       main_injury_roll = ['coup de grace']
       defender.status = "out of action"
+      if (debug) console.log("defender stunnes - taken OOA")
     } else {
       main_wound_roll = rollDice(main_hits)
       main_wounds = main_wound_roll.filter((roll) => roll >= toWound(attacker.strength, defender.toughness)).length
+      if (debug) console.log("main wound roll, wounds", main_wound_roll, main_wounds)
       offhand_wound_roll = rollDice(offhand_hits)
       offhand_wounds = offhand_wound_roll.filter((roll) => roll >= toWound(attacker.strength, defender.toughness)).length
+      if (debug) console.log("offhand wound roll, wounds", offhand_wound_roll, offhand_wounds)
 
       // Crits
       const main_crit = main_wound_roll.some((roll) => roll == 6) && ableToCrit(attacker.strength, defender.toughness)
       const offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(attacker.strength, defender.toughness)
       const crit_roll = rollDice(1)
+      if (debug) console.log("main crit, offhand crit, crit roll", main_crit, offhand_crit, crit_roll)
       const [no_armour_save, extra_wounds, injury_bonus] = main_crit || offhand_crit ? getCrit(crit_roll) : [false, 0, 0]
       if (main_crit) {
         main_wounds += extra_wounds
+        if (debug) console.log("main crit procced", main_wounds)
       } else if (offhand_crit) {
         offhand_wounds += extra_wounds
+        if (debug) console.log("offhand crit procced", offhand_wounds)
       }
 
       // Armour saves
       main_armour_save_roll = rollDice(main_wounds)
       offhand_armour_save_roll = rollDice(offhand_wounds)
+      if (debug) console.log("main armour save roll", main_armour_save_roll, "offhand armour save roll", offhand_armour_save_roll)
       if (no_armour_save) {
         main_armour_save_roll = ['crit no armour save']
         offhand_armour_save_roll = ['crit no armour save']
@@ -245,25 +286,47 @@ function App() {
       }
 
       // Injuries
+      if (debug) console.log("defender status", defender.status, "main wounds", main_wounds, "offhand wounds", offhand_wounds)
       if (defender.status == "knocked down" && main_wounds + offhand_wounds > 0) {
-        defender.status == "out of action"
+        defender.status = "out of action"
+        if (debug) console.log("defender knocked down - taken OOA")
       } else if (main_wounds + offhand_wounds >= defender.wounds) {
         let main_injuries = main_wounds
         let offhand_injuries = offhand_wounds
-        if (defender.wounds > 1) {
-          main_injuries = main_wounds - (defender.wounds - offhand_wounds)
+
+        if (defender.wounds >= 3) {
+          defender.wounds -= offhand_injuries
           offhand_injuries = 0
+          main_injuries = main_injuries - defender.wounds + 1
+        } else if (defender.wounds == 2) {
+          switch (offhand_injuries) {
+            case 2:
+              offhand_injuries = 1
+              break
+            case 1:
+              offhand_injuries = 0
+              main_injuries = main_injuries - 1
+              break
+            case 0:
+              main_injuries = main_injuries - 2
+              break
+          }
         }
+
         main_injury_roll = rollDice(main_injuries)
         offhand_injury_roll = rollDice(offhand_injuries)
+        if (debug) console.log("main injury roll", main_injury_roll, "offhand injury roll", offhand_injury_roll)
+
         const highest_injury_roll = Math.max(...[...main_injury_roll, ...offhand_injury_roll]) + injury_bonus
-        defender.status = injury(highest_injury_roll)
+        const highest_injury = injury(highest_injury_roll)
+        defender.status = highest_injury
+        if (debug) console.log("highest injury roll", highest_injury_roll, "injury", highest_injury)
       }
 
       defender.wounds -= main_wounds + offhand_wounds
       if (defender.wounds < 1) defender.wounds = 1
     }
-    return {'to_hit_rolls': [main_to_hit_roll, offhand_to_hit_roll], 'hits': [main_hits, offhand_hits], 'to_wound_rolls': [main_wound_roll, offhand_wound_roll], 'wounds': [main_wounds, offhand_wounds], 'armour_save_rolls': [main_armour_save_roll, offhand_armour_save_roll], 'injury_rolls': [main_injury_roll, offhand_injury_roll]}
+    return {'to_hit_rolls': [main_to_hit_roll, offhand_to_hit_roll], 'hits': [main_hits, offhand_hits], 'to_wound_rolls': [main_wound_roll, offhand_wound_roll], 'wounds': [main_wounds, offhand_wounds], 'armour_save_rolls': [main_armour_save_roll, offhand_armour_save_roll], 'injury_rolls': [main_injury_roll, offhand_injury_roll], 'parry_roll': parry_roll}
 }
 
   const runSimulateCombat = function () {
@@ -280,6 +343,12 @@ function App() {
       }
     }
 
+    const armour = {
+      'buckler': {
+        tags: ['parry', 'reroll parry']
+      }
+    }
+
     const warrior_1 = {
       name: "warrior_1",
       ws: 3,
@@ -289,7 +358,8 @@ function App() {
       wounds: 1,
       initiative: 3,
       status: "standing",
-      weapons: [weapons['sword'], weapons['club']],
+      weapons: [weapons['sword']],
+      armour: [armour['buckler']],
       armour_save: 7,
       charger: false,
       stood_up: false
@@ -304,7 +374,8 @@ function App() {
       wounds: 1,
       initiative: 3,
       status: "standing",
-      weapons: [weapons['sword'], weapons['club']],
+      weapons: [weapons['club'], weapons['club']],
+      armour: [],
       armour_save: 7,
       charger: false,
       stood_up: false
@@ -314,7 +385,7 @@ function App() {
       "warrior_1": 0,
       "warrior_2": 0
     }
-    const number_of_simulations = 10
+    const number_of_simulations = 1
     const final_rounds = {}
     for (let i = 0; i < number_of_simulations; i++) {
       if (no_charger) {
