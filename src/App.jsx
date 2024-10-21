@@ -150,6 +150,7 @@ function App() {
     let defender = warrior_2
     let round_number = 0
     let fight_done = false
+    let first_round = true
     const fight_log = []
 
     while (!fight_done) {
@@ -162,13 +163,14 @@ function App() {
       }
       [attacker, defender] = who_strikes_first(warrior_1, warrior_2)
 
-      const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender) : {}
-      const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker) : {}
+      const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender, first_round) : {}
+      const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker, first_round) : {}
       if (debug) console.log("End of round statuses", warrior_1.status, warrior_2.status, "fight done?", warrior_1.status == "out of action" || warrior_2.status == "out of action")
       if (warrior_1.status == "out of action" || warrior_2.status == "out of action") {
         fight_done = true
         // console.log("Fight over in round " + round_number)
       }
+      first_round = false
 
       fight_log.push({'round': round_number, 'attacker_round': attackers_round, 'defender_round': defenders_round, w1s: warrior_1.status, w2s: warrior_2.status, attacker: attacker.name, defender: defender.name})
     }
@@ -177,7 +179,7 @@ function App() {
     return [winner, round_number]
 }
 
-  const fightCombatRound = function (attacker, defender) {
+  const fightCombatRound = function (attacker, defender, first_round) {
     const debug = true
     let main_weapon = attacker.weapons[0]
     let offhand_weapon = attacker.weapons[1]
@@ -252,11 +254,21 @@ function App() {
       defender.status = "out of action"
       if (debug) console.log("defender stunnes - taken OOA")
     } else {
+      // Determine strength for each weapon
+      let main_strength = attacker.strength + main_weapon.strength_mod
+      if (main_weapon.tags.includes('first round bonus') && !first_round) {
+        main_strength = attacker.strength
+      }
+      let offhand_strength = attacker.strength + offhand_weapon.strength_mod
+      if (offhand_weapon.tags.includes('first round bonus') && !first_round) {
+        offhand_strength = attacker.strength
+      }
+
       main_wound_roll = rollDice(main_hits)
-      main_wounds = main_wound_roll.filter((roll) => roll >= toWound(attacker.strength, defender.toughness)).length
+      main_wounds = main_wound_roll.filter((roll) => roll >= toWound(main_strength, defender.toughness)).length
       if (debug) console.log("main wound roll, wounds", main_wound_roll, main_wounds)
       offhand_wound_roll = rollDice(offhand_hits)
-      offhand_wounds = offhand_wound_roll.filter((roll) => roll >= toWound(attacker.strength, defender.toughness)).length
+      offhand_wounds = offhand_wound_roll.filter((roll) => roll >= toWound(offhand_strength, defender.toughness)).length
       if (debug) console.log("offhand wound roll, wounds", offhand_wound_roll, offhand_wounds)
 
       // Crits
