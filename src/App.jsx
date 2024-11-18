@@ -81,7 +81,7 @@ function App() {
       return [false, 0, 0]
   }
 
-  const armour_save = function (attacker_strength, armour_save) {
+  const modifyArmourSave = function (attacker_strength, armour_save) {
     const ap = attacker_strength > 3 ? attacker_strength - 3 : 0
     const armour_save_target = armour_save + ap
     return armour_save_target
@@ -101,7 +101,7 @@ function App() {
       return "bugged"
   }
 
-  const do_recovery = function (warrior) {
+  const doRecovery = function (warrior) {
     // Recovery phase, stunned goes to knocked down, knocked down goes to standing
     if (warrior.status == "knocked down") {
         warrior.status = "standing"
@@ -112,18 +112,12 @@ function App() {
     }
   }
 
-  const who_strikes_first = function (warrior_1, warrior_2) {
-    // Check if either warrior is a charger or has stood up. If not, roll for initiative.
-    // The return tuple is the attacker and the defender, in that order.
-    if (warrior_1.charger || warrior_2.charger) {
-      if (warrior_1.charger) {
-        warrior_1.charger = false
-        return [warrior_1, warrior_2]
-      } else {
-        warrior_2.charger = false
-        return [warrior_2, warrior_1]
-      }
-    } else if (warrior_1.stood_up || warrior_2.stood_up) {
+  const whoStrikesFirst = function (warrior_1, warrior_2, first_turn) {
+    const warrior_1_tags = warrior_1.weapons.map((weapon) => weapon.tags).flat()
+    const warrior_2_tags = warrior_2.weapons.map((weapon) => weapon.tags).flat()
+
+    // If any warrior just stood up, the other warrior strikes first
+    if (warrior_1.stood_up || warrior_2.stood_up) {
       if (warrior_2.stood_up) {
         warrior_2.stood_up = false
         return [warrior_1, warrior_2]
@@ -131,7 +125,26 @@ function App() {
         warrior_1.stood_up = false
         return [warrior_2, warrior_1]
       }
-    } else if (warrior_1.initiative > warrior_2.initiative) {
+    }
+
+    // If any warrior carries a weapon with the "strike last" tag, that warrior strikes last
+    if (warrior_1_tags.includes('strike last') && !warrior_2_tags.includes('strike last')) {
+      return [warrior_2, warrior_1]
+    } else if (warrior_2_tags.includes('strike last') && !warrior_1_tags.includes('strike last')) {
+      return [warrior_1, warrior_2]
+    }
+
+    // If it's the first turn the charger strikes first, unless the other warrior has the "strike first" tag, then it defaults to initiative
+    if (first_turn) {
+      if (warrior_1.charger && !warrior_2_tags.includes('strike first')) {
+        return [warrior_1, warrior_2]
+      } else  if (warrior_2.charger && !warrior_1_tags.includes('strike first')) {
+        return [warrior_2, warrior_1]
+      }
+    }
+
+    // Default to initiative
+    if (warrior_1.initiative > warrior_2.initiative) {
       return [warrior_1, warrior_2]
     } else if (warrior_2.initiative > warrior_1.initiative) {
       return [warrior_2, warrior_1]
@@ -164,12 +177,12 @@ function App() {
       // Recovery phase
       if (round_number % 2 == 0) {
         // The charge-receiver recovers on round 2, 4, 6 etc
-        do_recovery(warrior_2)
+        doRecovery(warrior_2)
       } else  {
         // The charger recovers on round 1, 3, 5 etc
-        do_recovery(warrior_1)
+        doRecovery(warrior_1)
       }
-      [attacker, defender] = who_strikes_first(warrior_1, warrior_2)
+      [attacker, defender] = whoStrikesFirst(warrior_1, warrior_2, first_round)
 
       const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender, first_round) : {}
       const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker, first_round) : {}
@@ -349,8 +362,8 @@ function App() {
         offhand_armour_save_roll = ['crit no armour save']
       } else {
         // Filter out unsaved wounds if roll is below the target armour save
-        main_wounds = main_armour_save_roll.filter((roll) => roll < armour_save(main_strength, defender.armour_save)).length
-        offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < armour_save(offhand_strength, defender.armour_save)).length
+        main_wounds = main_armour_save_roll.filter((roll) => roll < modifyArmourSave(main_strength, defender.armour_save)).length
+        offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save)).length
       }
 
       // Injuries
@@ -393,6 +406,10 @@ function App() {
         offhand_injury_roll = rollDice(offhand_injuries)
         if (debug) console.log("main injury roll", main_injury_roll, "offhand injury roll", offhand_injury_roll)
 
+        // Apply concussion rule to injury rolls if the weapon has the concussion tag
+        if (main_weapon.tags.includes('concussion')) {main_injury_roll = main_injury_roll.map((roll) => roll == 2 ? 3 : roll)}
+        if (offhand_weapon && offhand_weapon.tags.includes('concussion')) {offhand_injury_roll = offhand_injury_roll.map((roll) => roll == 2 ? 3 : roll)}
+
         // Determine the highest injury roll and apply the injury
         const highest_injury_roll = Math.max(...[...main_injury_roll, ...offhand_injury_roll]) + injury_bonus
         const highest_injury = injury(highest_injury_roll)
@@ -412,6 +429,11 @@ function App() {
   const runSimulateCombat = function () {
     console.log("House rules: add WS to parry", addWSToParry, "minus to hit offhand", minusToHitOffhand)
     const weapons = {
+      'handweapon': {
+          strength_mod: 0,
+          type: "slashing",
+          tags: []
+      },
       'sword': {
           strength_mod: 0,
           type: "slashing",
@@ -427,10 +449,25 @@ function App() {
           type: "bashing",
           tags: ['first round bonus']
       },
+      'flail': {
+          strength_mod: 2,
+          type: "bashing",
+          tags: ['first round bonus']
+      },
       'halberd': {
           strength_mod: 1,
           type: "bashing",
           tags: []
+      },
+      'spear': {
+          strength_mod: 0,
+          type: "bashing",
+          tags: ['strike first']
+      },
+      'great weapon': {
+          strength_mod: 2,
+          type: "bashing",
+          tags: ['strike last']
       },
     }
 
@@ -450,8 +487,8 @@ function App() {
       initiative: 3,
       status: "standing",
       weapons: [weapons['club']],
-      armour: [armour['buckler']],
-      armour_save: 7,
+      armour: [],
+      armour_save: 6,
       charger: false,
       stood_up: false
     }
