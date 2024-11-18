@@ -4,7 +4,11 @@ import viteLogo from '/vite.svg'
 import './App.css'
 
 function App() {
+  const debug = false
+
   const [count, setCount] = useState(0)
+  const addWSToParry = false
+  const minusToHitOffhand = 0
 
   function getRandomInt(min, max) {
     // Create byte array and fill with 1 random number
@@ -34,7 +38,6 @@ function App() {
           return 5
       }
       return 4
-
   }
 
   const toWound = function (strength, toughness) {
@@ -139,7 +142,6 @@ function App() {
   }
 
   const simulateCombat = function (warrior_1_base, warrior_2_base) {
-    const debug = true
     // const warrior_1 = {...warrior_1_base}
     // const warrior_2 = {...warrior_2_base}
 
@@ -174,13 +176,12 @@ function App() {
 
       fight_log.push({'round': round_number, 'attacker_round': attackers_round, 'defender_round': defenders_round, w1s: warrior_1.status, w2s: warrior_2.status, attacker: attacker.name, defender: defender.name})
     }
-    console.log(fight_log)
+    if (debug) console.log(fight_log)
     const winner = warrior_1.status == "out of action" ? warrior_2 : warrior_1
     return [winner, round_number]
 }
 
   const fightCombatRound = function (attacker, defender, first_round) {
-    const debug = true
     let main_weapon = attacker.weapons[0]
     let offhand_weapon = attacker.weapons[1]
 
@@ -208,6 +209,10 @@ function App() {
       if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
 
       offhand_to_hit_roll = offhand_weapon ? rollDice(1) : []
+
+      if (minusToHitOffhand > 0) {
+        offhand_to_hit_roll = offhand_to_hit_roll.map((roll) => roll - minusToHitOffhand)
+      }
       offhand_hits = offhand_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
 
       if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
@@ -225,9 +230,16 @@ function App() {
       if (debug) console.log("parry conditions", combined_parry_equipment.length > 0, max_hit_roll != 6, !combined_hit_roll.includes('auto hit'))
       if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && !combined_hit_roll.includes('auto hit')) {
         // If the defender has more than two weapons or armours with the parry tag, check for reroll parry tag and roll 2 dice
-        parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? Math.max(...rollDice(2)) : rollDice(1)
+        parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? rollDice(2) : rollDice(1)
         if (debug) console.log("parry procced", parry_roll)
-        const parry_successful = parry_roll > max_hit_roll
+        parry_roll = Math.max(...parry_roll)
+
+        let parry_successful = parry_roll > max_hit_roll
+        if (addWSToParry) {
+          if (debug) console.log("parry roll + ws, max hit roll + ws", parry_roll, defender.ws, max_hit_roll, attacker.ws)
+          parry_successful = parry_roll + defender.ws > max_hit_roll + attacker.ws
+        }
+
         if (main_to_hit_roll.includes(max_hit_roll) && parry_successful) {
           main_hits -= main_hits > 0 ? 1 : 0
           if (debug) console.log("main parry successful", main_hits)
@@ -259,8 +271,9 @@ function App() {
       if (main_weapon.tags.includes('first round bonus') && !first_round) {
         main_strength = attacker.strength
       }
-      let offhand_strength = attacker.strength + offhand_weapon.strength_mod
-      if (offhand_weapon.tags.includes('first round bonus') && !first_round) {
+      let offhand_strength = attacker.strength
+      if (offhand_weapon && offhand_weapon.strength_mod) offhand_strength += offhand_weapon.strength_mod
+      if (offhand_weapon && offhand_weapon.tags.includes('first round bonus') && !first_round) {
         offhand_strength = attacker.strength
       }
 
@@ -272,8 +285,8 @@ function App() {
       if (debug) console.log("offhand wound roll, wounds", offhand_wound_roll, offhand_wounds)
 
       // Crits
-      const main_crit = main_wound_roll.some((roll) => roll == 6) && ableToCrit(attacker.strength, defender.toughness)
-      const offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(attacker.strength, defender.toughness)
+      const main_crit = main_wound_roll.some((roll) => roll == 6) && ableToCrit(main_strength, defender.toughness)
+      const offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(offhand_strength, defender.toughness)
       const crit_roll = rollDice(1)
       if (debug) console.log("main crit, offhand crit, crit roll", main_crit, offhand_crit, crit_roll)
       const [no_armour_save, extra_wounds, injury_bonus] = main_crit || offhand_crit ? getCrit(crit_roll) : [false, 0, 0]
@@ -293,8 +306,8 @@ function App() {
         main_armour_save_roll = ['crit no armour save']
         offhand_armour_save_roll = ['crit no armour save']
       } else {
-        main_wounds = main_armour_save_roll.filter((roll) => roll < armour_save(attacker.strength, defender.armour_save)).length
-        offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < armour_save(attacker.strength, defender.armour_save)).length
+        main_wounds = main_armour_save_roll.filter((roll) => roll < armour_save(main_strength, defender.armour_save)).length
+        offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < armour_save(offhand_strength, defender.armour_save)).length
       }
 
       // Injuries
@@ -317,10 +330,9 @@ function App() {
               break
             case 1:
               offhand_injuries = 0
-              main_injuries = main_injuries - 1
               break
             case 0:
-              main_injuries = main_injuries - 2
+              main_injuries = main_injuries - 1
               break
           }
         }
@@ -342,6 +354,7 @@ function App() {
 }
 
   const runSimulateCombat = function () {
+    console.log("House rules: add WS to parry", addWSToParry, "minus to hit offhand", minusToHitOffhand)
     const weapons = {
       'sword': {
           strength_mod: 0,
@@ -352,7 +365,17 @@ function App() {
           strength_mod: 0,
           type: "bashing",
           tags: ['concussion']
-      }
+      },
+      'morning_star': {
+          strength_mod: 1,
+          type: "bashing",
+          tags: ['first round bonus']
+      },
+      'halberd': {
+          strength_mod: 1,
+          type: "bashing",
+          tags: []
+      },
     }
 
     const armour = {
@@ -370,7 +393,7 @@ function App() {
       wounds: 1,
       initiative: 3,
       status: "standing",
-      weapons: [weapons['sword']],
+      weapons: [weapons['club']],
       armour: [armour['buckler']],
       armour_save: 7,
       charger: false,
@@ -397,7 +420,7 @@ function App() {
       "warrior_1": 0,
       "warrior_2": 0
     }
-    const number_of_simulations = 1
+    const number_of_simulations = 100000
     const final_rounds = {}
     for (let i = 0; i < number_of_simulations; i++) {
       if (no_charger) {
