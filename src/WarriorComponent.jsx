@@ -17,13 +17,17 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         selectedArmour: []
     });
 
+    useEffect(() => {
+        handleWarriorChange(formData);
+    }, [])
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData({
             ...formData,
             [name]: value
         });
-        handleWarriorChange(formData);
+        handleWarriorChange(formData)
     };
 
     const handleMultiSelectChange = (e) => {

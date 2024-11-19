@@ -7,12 +7,12 @@ const minusToHitOffhand = 0
 export const runSimulateCombat = function (warrior1, warrior2) {
   const warrior_1 = {
     name: "warrior_1",
-    ws: 3,
-    strength: 3,
-    toughness: 6,
-    attacks: 1,
-    wounds: 1,
-    initiative: 3,
+    ws: warrior1.WS,
+    strength: warrior1.S,
+    toughness: warrior1.T,
+    attacks: warrior1.A,
+    wounds: warrior1.W,
+    initiative: warrior1.I,
     status: "standing",
     weapons: [weapons['club'], weapons['club']],
     armour: [],
@@ -23,12 +23,12 @@ export const runSimulateCombat = function (warrior1, warrior2) {
 
   const warrior_2 = {
     name: "warrior_2",
-    ws: 3,
-    strength: 3,
-    toughness: 3,
-    attacks: 1,
-    wounds: 1,
-    initiative: 3,
+    ws: warrior2.WS,
+    strength: warrior2.S,
+    toughness: warrior2.T,
+    attacks: warrior2.A,
+    wounds: warrior2.W,
+    initiative: warrior2.I,
     status: "standing",
     weapons: [weapons['club'], weapons['club']],
     armour: [],
@@ -109,102 +109,30 @@ const simulateCombat = function (warrior_1_base, warrior_2_base) {
 }
 
 const fightCombatRound = function (attacker, defender, first_round) {
-  let main_weapon = attacker.weapons[0]
-  let offhand_weapon = attacker.weapons[1]
+  const {
+    main_hits,
+    offhand_hits,
+    main_to_hit_roll,
+    offhand_to_hit_roll,
+    parry_roll
+  } = toHitPhase(attacker, defender)
 
-  if (debug) console.log("weapons", main_weapon, offhand_weapon)
-
-  // Initiate variables, these will be updated in the to hit, to wound and armour save phases
-  let main_hits = 0
-  let offhand_hits = 0
-  let main_to_hit_roll = []
-  let offhand_to_hit_roll = []
-  let parry_roll = []
-
-  // Auto hit if the defender is knocked down or stunned
-  if (defender.status == "knocked down" || defender.status == "stunned") {
-      main_hits = attacker.attacks
-      main_to_hit_roll = ['auto hit']
-      if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
-
-      if (offhand_weapon) {
-        offhand_to_hit_roll = ['auto hit']
-        offhand_hits = 1
-        if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
-      }
-  } else {
-    // Roll to hit dice
-    main_to_hit_roll = rollDice(attacker.attacks)
-
-    // Filter out any dice below the target to hit value
-    main_hits = main_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
-
-    if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
-
-    // Roll for offhand weapon if available, this is done separately to make it easier to apply house rules
-    offhand_to_hit_roll = offhand_weapon ? rollDice(1) : []
-
-    // Apply offhand house rules, if active
-    if (minusToHitOffhand > 0) {
-      offhand_to_hit_roll = offhand_to_hit_roll.map((roll) => roll - minusToHitOffhand)
-    }
-
-    // Filter out any dice below the target to hit value
-    offhand_hits = offhand_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
-
-    if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
-
-    // Check if opponent has parry equipment
-    const parry_weapons = defender.weapons.filter((weapon) => weapon.tags.includes('parry'))
-    const parry_armour = defender.armour.filter((armour) => armour.tags.includes('parry'))
-    if (debug) console.log("parry equipment", parry_weapons, parry_armour)
-
-    // Combine all parry equipment and combine all to hit rolls to determine if parry is possible, and if re-roll parry is available
-    const combined_parry_equipment = [...parry_weapons, ...parry_armour]
-    const combined_hit_roll = [...main_to_hit_roll, ...offhand_to_hit_roll]
-    const max_hit_roll = Math.max(...combined_hit_roll)
-    if (debug) console.log("max hit roll", max_hit_roll)
-
-    // If the defender has at least one weapon or armour with the parry tag, allow parry
-    if (debug) console.log("parry conditions", combined_parry_equipment.length > 0, max_hit_roll != 6, !combined_hit_roll.includes('auto hit'))
-    if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && !combined_hit_roll.includes('auto hit')) {
-      // If the defender has more than two weapons or armours with the parry tag, check for reroll parry tag and roll 2 dice
-      parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? rollDice(2) : rollDice(1)
-      if (debug) console.log("parry procced", parry_roll)
-      // Get the highest of the parry rolls, in case of a re-roll.
-      parry_roll = Math.max(...parry_roll)
-
-      // If parry roll is higher than the highest hit roll, parry is successful
-      let parry_successful = parry_roll > max_hit_roll
-
-      // If house rule is active, add WS to parry roll
-      if (addWSToParry) {
-        if (debug) console.log("parry roll + ws, max hit roll + ws", parry_roll, defender.ws, max_hit_roll, attacker.ws)
-        parry_successful = parry_roll + defender.ws > max_hit_roll + attacker.ws
-      }
-
-      // If the parry was successful, determine if it was a mainhand or offhand hit that should be negated.
-      if (main_to_hit_roll.includes(max_hit_roll) && parry_successful) {
-        main_hits -= main_hits > 0 ? 1 : 0
-        if (debug) console.log("main parry successful", main_hits)
-      } else if (parry_successful){
-        offhand_hits -= offhand_hits > 0 ? 1 : 0
-        if (debug) console.log("offhand parry successful", offhand_hits)
-      }
-    }
-
-  }
+  let {
+    main_wound_roll,
+    offhand_wound_roll,
+    main_wounds,
+    offhand_wounds,
+    main_armour_save_roll,
+    offhand_armour_save_roll,
+    injury_bonus
+  } = toWoundPhase(attacker, defender, main_hits, offhand_hits, first_round)
 
   // To Wound
   // Initiate variables, these will be updated in the to wound and armour save phases
-  let main_wound_roll = []
-  let offhand_wound_roll = []
-  let main_wounds = 0
-  let offhand_wounds = 0
-  let main_armour_save_roll = []
-  let offhand_armour_save_roll = []
   let main_injury_roll = []
   let offhand_injury_roll = []
+  let main_weapon = attacker.weapons[0]
+  let offhand_weapon = attacker.weapons[1]
 
   // If the defender is stunned, auto OOA it.
   if (defender.status == "stunned") {
@@ -213,65 +141,6 @@ const fightCombatRound = function (attacker, defender, first_round) {
     defender.status = "out of action"
     if (debug) console.log("defender stunnes - taken OOA")
   } else {
-    // Determine strength for each weapon
-    let main_strength = attacker.strength + main_weapon.strength_mod
-
-    // Check for first round bonuses for weapons, like morning stars, flails, etc.
-    // If not first round, strength is base strength
-    if (main_weapon.tags.includes('first round bonus') && !first_round) {
-      main_strength = attacker.strength
-    }
-
-    // Same thing as above, but for offhand weapon
-    let offhand_strength = attacker.strength
-    if (offhand_weapon && offhand_weapon.strength_mod) offhand_strength += offhand_weapon.strength_mod
-    if (offhand_weapon && offhand_weapon.tags.includes('first round bonus') && !first_round) {
-      offhand_strength = attacker.strength
-    }
-
-    // Roll to wound dice for main hand attacks, filter out those below the target value
-    main_wound_roll = rollDice(main_hits)
-    main_wounds = main_wound_roll.filter((roll) => roll >= toWound(main_strength, defender.toughness)).length
-    if (debug) console.log("main wound roll, wounds", main_wound_roll, main_wounds)
-
-    // Same as above, but for offhand attacks
-    offhand_wound_roll = rollDice(offhand_hits)
-    offhand_wounds = offhand_wound_roll.filter((roll) => roll >= toWound(offhand_strength, defender.toughness)).length
-    if (debug) console.log("offhand wound roll, wounds", offhand_wound_roll, offhand_wounds)
-
-    // Crits
-    // Check for sixes to determine  if there was any crits.
-    const main_crit = main_wound_roll.some((roll) => roll == 6) && ableToCrit(main_strength, defender.toughness)
-    const offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(offhand_strength, defender.toughness)
-    const crit_roll = rollDice(1)
-    if (debug) console.log("main crit, offhand crit, crit roll", main_crit, offhand_crit, crit_roll)
-
-    // Retrieve crit bonuses if crit procced
-    const [no_armour_save, extra_wounds, injury_bonus] = main_crit || offhand_crit ? getCrit(crit_roll) : [false, 0, 0]
-    if (main_crit) {
-      main_wounds += extra_wounds
-      if (debug) console.log("main crit procced", main_wounds)
-    } else if (offhand_crit) {
-      offhand_wounds += extra_wounds
-      if (debug) console.log("offhand crit procced", offhand_wounds)
-    }
-
-    // Armour saves
-    // Roll armour saves separately for main hand and offhand attacks
-    main_armour_save_roll = rollDice(main_wounds)
-    offhand_armour_save_roll = rollDice(offhand_wounds)
-    if (debug) console.log("main armour save roll", main_armour_save_roll, "offhand armour save roll", offhand_armour_save_roll)
-
-    if (no_armour_save) {
-      // No armour save from certain crits
-      main_armour_save_roll = ['crit no armour save']
-      offhand_armour_save_roll = ['crit no armour save']
-    } else {
-      // Filter out unsaved wounds if roll is below the target armour save
-      main_wounds = main_armour_save_roll.filter((roll) => roll < modifyArmourSave(main_strength, defender.armour_save)).length
-      offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save)).length
-    }
-
     // Injuries
     if (debug) console.log("defender status", defender.status, "main wounds", main_wounds, "offhand wounds", offhand_wounds)
 
@@ -362,7 +231,7 @@ const toHit = function (attacker_ws, defender_ws) {
   return 4
 }
 
-const toHitPhase = function (attacker, defender) {
+export const toHitPhase = function (attacker, defender) {
   let main_weapon = attacker.weapons[0]
   let offhand_weapon = attacker.weapons[1]
 
@@ -447,7 +316,7 @@ const toHitPhase = function (attacker, defender) {
       }
     }
   }
-  return [main_hits, offhand_hits]
+  return { main_hits, offhand_hits, main_to_hit_roll, offhand_to_hit_roll, parry_roll }
 }
 
 const toWound = function (strength, toughness) {
@@ -472,6 +341,80 @@ const toWound = function (strength, toughness) {
   }
 
   return target_value
+}
+
+export const toWoundPhase = function (attacker, defender, main_hits, offhand_hits, first_round) {
+    // To Wound
+  // Initiate variables, these will be updated in the to wound and armour save phases
+  let main_wound_roll = []
+  let offhand_wound_roll = []
+  let main_wounds = 0
+  let offhand_wounds = 0
+  let main_armour_save_roll = []
+  let offhand_armour_save_roll = []
+  let main_weapon = attacker.weapons[0]
+  let offhand_weapon = attacker.weapons[1]
+
+  // Determine strength for each weapon
+  let main_strength = attacker.strength + main_weapon.strength_mod
+
+  // Check for first round bonuses for weapons, like morning stars, flails, etc.
+  // If not first round, strength is base strength
+  if (main_weapon.tags.includes('first round bonus') && !first_round) {
+    main_strength = attacker.strength
+  }
+
+  // Same thing as above, but for offhand weapon
+  let offhand_strength = attacker.strength
+  if (offhand_weapon && offhand_weapon.strength_mod) offhand_strength += offhand_weapon.strength_mod
+  if (offhand_weapon && offhand_weapon.tags.includes('first round bonus') && !first_round) {
+    offhand_strength = attacker.strength
+  }
+
+  // Roll to wound dice for main hand attacks, filter out those below the target value
+  main_wound_roll = rollDice(main_hits)
+  main_wounds = main_wound_roll.filter((roll) => roll >= toWound(main_strength, defender.toughness)).length
+  if (debug) console.log("main wound roll, wounds", main_wound_roll, main_wounds)
+
+  // Same as above, but for offhand attacks
+  offhand_wound_roll = rollDice(offhand_hits)
+  offhand_wounds = offhand_wound_roll.filter((roll) => roll >= toWound(offhand_strength, defender.toughness)).length
+  if (debug) console.log("offhand wound roll, wounds", offhand_wound_roll, offhand_wounds)
+
+  // Crits
+  // Check for sixes to determine  if there was any crits.
+  const main_crit = main_wound_roll.some((roll) => roll == 6) && ableToCrit(main_strength, defender.toughness)
+  const offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(offhand_strength, defender.toughness)
+  const crit_roll = rollDice(1)
+  if (debug) console.log("main crit, offhand crit, crit roll", main_crit, offhand_crit, crit_roll)
+
+  // Retrieve crit bonuses if crit procced
+  const [no_armour_save, extra_wounds, injury_bonus] = main_crit || offhand_crit ? getCrit(crit_roll) : [false, 0, 0]
+  if (main_crit) {
+    main_wounds += extra_wounds
+    if (debug) console.log("main crit procced", main_wounds)
+  } else if (offhand_crit) {
+    offhand_wounds += extra_wounds
+    if (debug) console.log("offhand crit procced", offhand_wounds)
+  }
+
+  // Armour saves
+  // Roll armour saves separately for main hand and offhand attacks
+  main_armour_save_roll = rollDice(main_wounds)
+  offhand_armour_save_roll = rollDice(offhand_wounds)
+  if (debug) console.log("main armour save roll", main_armour_save_roll, "offhand armour save roll", offhand_armour_save_roll)
+
+  if (no_armour_save) {
+    // No armour save from certain crits
+    main_armour_save_roll = ['crit no armour save']
+    offhand_armour_save_roll = ['crit no armour save']
+  } else {
+    // Filter out unsaved wounds if roll is below the target armour save
+    main_wounds = main_armour_save_roll.filter((roll) => roll < modifyArmourSave(main_strength, defender.armour_save)).length
+    offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save)).length
+  }
+
+  return { main_wound_roll, offhand_wound_roll, main_wounds, offhand_wounds, main_armour_save_roll, offhand_armour_save_roll, injury_bonus }
 }
 
 const ableToCrit = function (strength, toughness) {
