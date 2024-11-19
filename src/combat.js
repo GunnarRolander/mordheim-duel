@@ -4,38 +4,38 @@ const debug = false
 const addWSToParry = false
 const minusToHitOffhand = 0
 
-export const runSimulateCombat = function (warrior1, warrior2) {
-  const warrior_1 = {
-    name: "warrior_1",
-    ws: warrior1.WS,
-    strength: warrior1.S,
-    toughness: warrior1.T,
-    attacks: warrior1.A,
-    wounds: warrior1.W,
-    initiative: warrior1.I,
+const createWarriorFromForm = function (name, formData) {
+
+  const equipped_weapons = [weapons[formData.mainHand]]
+  if (formData.offHand != 'emptyHand') equipped_weapons.push(weapons[formData.offHand])
+
+  const equipped_armour = formData.selectedArmour.map((type) => armour[type])
+  const armour_save = equipped_armour.reduce((acc, armour) => acc - armour.save, 7)
+
+  const warrior = {
+    name: name,
+    ws: formData.WS,
+    strength: formData.S,
+    toughness: formData.T,
+    attacks: formData.A,
+    wounds: formData.W,
+    initiative: formData.I,
     status: "standing",
-    weapons: [weapons['club'], weapons['club']],
-    armour: [],
-    armour_save: 7,
+    weapons: equipped_weapons,
+    armour: equipped_armour,
+    armour_save: armour_save,
     charger: false,
     stood_up: false
   }
 
-  const warrior_2 = {
-    name: "warrior_2",
-    ws: warrior2.WS,
-    strength: warrior2.S,
-    toughness: warrior2.T,
-    attacks: warrior2.A,
-    wounds: warrior2.W,
-    initiative: warrior2.I,
-    status: "standing",
-    weapons: [weapons['club'], weapons['club']],
-    armour: [],
-    armour_save: 7,
-    charger: false,
-    stood_up: false
-  }
+  return warrior
+}
+
+export const runSimulateCombat = function (warrior1, warrior2) {
+
+  const warrior_1 = createWarriorFromForm("warrior_1", warrior1)
+  const warrior_2 = createWarriorFromForm("warrior_2", warrior2)
+
   const no_charger = !warrior_1.charger && !warrior_2.charger
   const wins = {
     "warrior_1": 0,
@@ -58,10 +58,16 @@ export const runSimulateCombat = function (warrior1, warrior2) {
     wins[winner.name] += 1
     final_rounds[round] = final_rounds[round] ? final_rounds[round] + 1 : 1
   }
+
+  const win_rate_warrior_1 = wins["warrior_1"] / number_of_simulations * 100
+  const win_rate_warrior_2 = wins["warrior_2"] / number_of_simulations * 100
+
   console.log(wins)
-  console.log("warrior_1 win rate: " + wins["warrior_1"] / number_of_simulations * 100 + "%")
-  console.log("warrior_2 win rate: " + wins["warrior_2"] / number_of_simulations * 100 + "%")
+  console.log("warrior_1 win rate: " + win_rate_warrior_1 + "%")
+  console.log("warrior_2 win rate: " + win_rate_warrior_2 + "%")
   console.log(final_rounds)
+
+  return {win_rate_warrior_1, win_rate_warrior_2}
 }
 
 const simulateCombat = function (warrior_1_base, warrior_2_base) {

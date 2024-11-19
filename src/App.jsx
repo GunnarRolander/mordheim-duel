@@ -9,6 +9,10 @@ import { runTests } from './tests.js';
 function App() {
   const [warrior1, setWarrior1] = useState()
   const [warrior2, setWarrior2] = useState()
+  const [winRates, setWinRates] = useState({
+    win_rate_warrior_1: 0,
+    win_rate_warrior_2: 0
+  })
 
   const handleWarrior1Change = (formData) => {
     handleWarriorChange(formData, setWarrior1);
@@ -22,33 +26,39 @@ function App() {
     setWarriorFunction(formData);
   }
 
+  const runSimulation = () => {
+    const winRates = runSimulateCombat(warrior1, warrior2);
+    setWinRates(winRates);
+  }
+
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
       <div className="card">
-        <div>
-          <h2>Warrior 1</h2>
-          <WarriorComponent
-            handleWarriorChange={handleWarrior1Change}
-          />
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <div>
+              <h2>Warrior 1</h2>
+              <WarriorComponent
+                handleWarriorChange={handleWarrior1Change}
+              />
+            </div>
+            <div style={{ padding: '3em'}}>
+              <h3>Result</h3>
+              <p>Warrior 1: {winRates.win_rate_warrior_1.toFixed(2)}%</p>
+              <p>Warrior 2: {winRates.win_rate_warrior_2.toFixed(2)}%</p>
+            </div>
+            <div>
+              <h2>Warrior 2</h2>
+              <WarriorComponent
+                handleWarriorChange={handleWarrior2Change}
+              />
+            </div>
+          </div>
         </div>
-        <div>
-          <h2>Warrior 2</h2>
-          <WarriorComponent
-            handleWarriorChange={handleWarrior2Change}
-          />
-        </div>
-        <button onClick={() => runSimulateCombat(warrior1, warrior2)}>
+        <button onClick={() => runSimulation()}>
           simulate combat
         </button>
+        <br/>
         <button onClick={() => runTests()}>
           run unit tests
         </button>

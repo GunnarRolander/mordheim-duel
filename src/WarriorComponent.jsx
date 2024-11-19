@@ -12,14 +12,14 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         I: 3,
         A: 1,
         LD: 7,
-        mainHand: '',
-        offHand: '',
+        mainHand: 'handweapon',
+        offHand: 'emptyHand',
         selectedArmour: []
     });
 
     useEffect(() => {
         handleWarriorChange(formData);
-    }, [])
+    }, [formData])
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -27,7 +27,7 @@ const WarriorComponent = ({ handleWarriorChange }) => {
             ...formData,
             [name]: value
         });
-        handleWarriorChange(formData)
+        //handleWarriorChange(formData)
     };
 
     const handleMultiSelectChange = (e) => {
@@ -79,6 +79,7 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         <div>
             <label>Offhand </label>
             <select name="offHand" value={formData.offHand} onChange={handleChange}>
+                <option key="emptyOffhand" value="emptyHand">No weapon</option>
                 {Object.keys(weapons).map((weapon) => (
                     <option key={weapon} value={weapon}>{weapon}</option>
                 ))}

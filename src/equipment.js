@@ -43,6 +43,23 @@ export const weapons = {
 
 export const armour = {
   'buckler': {
-    tags: ['parry', 'reroll parry']
-  }
+    tags: ['parry', 'reroll parry'],
+    save: 0
+  },
+  'shield': {
+    tags: [],
+    save: 1
+  },
+  'light armour': {
+    tags: [],
+    save: 1
+  },
+  'heavy armour': {
+    tags: [],
+    save: 2
+  },
+  'helmet': {
+    tags: ['avoid stun'],
+    save: 0
+  },
 }
