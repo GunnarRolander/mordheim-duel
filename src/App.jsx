@@ -4,6 +4,7 @@ import viteLogo from '/vite.svg'
 import './App.css'
 import { runSimulateCombat } from './combat.js';
 import WarriorComponent from './WarriorComponent.jsx';
+import { runTests } from './tests.js';
 
 function App() {
   const [warrior1, setWarrior1] = useState()
@@ -47,6 +48,9 @@ function App() {
         </div>
         <button onClick={() => runSimulateCombat(warrior1, warrior2)}>
           simulate combat
+        </button>
+        <button onClick={() => runTests()}>
+          run unit tests
         </button>
       </div>
     </>

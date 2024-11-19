@@ -343,7 +343,7 @@ const toWound = function (strength, toughness) {
   return target_value
 }
 
-export const toWoundPhase = function (attacker, defender, main_hits, offhand_hits, first_round) {
+export const toWoundPhase = function (attacker, defender, main_hits, offhand_hits, first_round, no_crits = false) {
     // To Wound
   // Initiate variables, these will be updated in the to wound and armour save phases
   let main_wound_roll = []
@@ -383,10 +383,16 @@ export const toWoundPhase = function (attacker, defender, main_hits, offhand_hit
 
   // Crits
   // Check for sixes to determine  if there was any crits.
-  const main_crit = main_wound_roll.some((roll) => roll == 6) && ableToCrit(main_strength, defender.toughness)
-  const offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(offhand_strength, defender.toughness)
+  let main_crit = main_wound_roll.some((roll) => roll == 6) && ableToCrit(main_strength, defender.toughness)
+  let offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(offhand_strength, defender.toughness)
   const crit_roll = rollDice(1)
   if (debug) console.log("main crit, offhand crit, crit roll", main_crit, offhand_crit, crit_roll)
+
+  // If no crits flag are set, set crits to false. No crits should only be used for testing.
+  if (no_crits) {
+    main_crit = false
+    offhand_crit = false
+  }
 
   // Retrieve crit bonuses if crit procced
   const [no_armour_save, extra_wounds, injury_bonus] = main_crit || offhand_crit ? getCrit(crit_roll) : [false, 0, 0]
@@ -414,7 +420,7 @@ export const toWoundPhase = function (attacker, defender, main_hits, offhand_hit
     offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save)).length
   }
 
-  return { main_wound_roll, offhand_wound_roll, main_wounds, offhand_wounds, main_armour_save_roll, offhand_armour_save_roll, injury_bonus }
+  return { main_wound_roll, offhand_wound_roll, main_wounds, offhand_wounds, main_armour_save_roll, offhand_armour_save_roll, injury_bonus, no_armour_save, extra_wounds }
 }
 
 const ableToCrit = function (strength, toughness) {
