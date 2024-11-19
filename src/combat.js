@@ -4,19 +4,19 @@ const debug = false
 const addWSToParry = false
 const minusToHitOffhand = 0
 
-export const runSimulateCombat = function () {
+export const runSimulateCombat = function (warrior1, warrior2) {
   const warrior_1 = {
     name: "warrior_1",
     ws: 3,
     strength: 3,
-    toughness: 3,
+    toughness: 6,
     attacks: 1,
     wounds: 1,
     initiative: 3,
     status: "standing",
-    weapons: [weapons['club']],
+    weapons: [weapons['club'], weapons['club']],
     armour: [],
-    armour_save: 6,
+    armour_save: 7,
     charger: false,
     stood_up: false
   }
@@ -324,7 +324,7 @@ const fightCombatRound = function (attacker, defender, first_round) {
     }
 
     // Remove wounds from defender
-    defender.wounds -= main_wounds + offhand_wounds
+    defender.wounds -= (main_wounds + offhand_wounds)
     // If the defender has less than 1 wounds, set it to 1 to avoid negative wounds.
     // This also makes the logic easier since 0 wounds and 1 wound is almost the same.
     if (defender.wounds < 1) defender.wounds = 1
@@ -360,6 +360,94 @@ const toHit = function (attacker_ws, defender_ws) {
       return 5
   }
   return 4
+}
+
+const toHitPhase = function (attacker, defender) {
+  let main_weapon = attacker.weapons[0]
+  let offhand_weapon = attacker.weapons[1]
+
+  if (debug) console.log("weapons", main_weapon, offhand_weapon)
+
+  // Initiate variables, these will be updated in the to hit, to wound and armour save phases
+  let main_hits = 0
+  let offhand_hits = 0
+  let main_to_hit_roll = []
+  let offhand_to_hit_roll = []
+  let parry_roll = []
+
+  // Auto hit if the defender is knocked down or stunned
+  if (defender.status == "knocked down" || defender.status == "stunned") {
+      main_hits = attacker.attacks
+      main_to_hit_roll = ['auto hit']
+      if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
+
+      if (offhand_weapon) {
+        offhand_to_hit_roll = ['auto hit']
+        offhand_hits = 1
+        if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
+      }
+  } else {
+    // Roll to hit dice
+    main_to_hit_roll = rollDice(attacker.attacks)
+
+    // Filter out any dice below the target to hit value
+    main_hits = main_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
+
+    if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
+
+    // Roll for offhand weapon if available, this is done separately to make it easier to apply house rules
+    offhand_to_hit_roll = offhand_weapon ? rollDice(1) : []
+
+    // Apply offhand house rules, if active
+    if (minusToHitOffhand > 0) {
+      offhand_to_hit_roll = offhand_to_hit_roll.map((roll) => roll - minusToHitOffhand)
+    }
+
+    // Filter out any dice below the target to hit value
+    offhand_hits = offhand_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
+
+    if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
+
+    // Check if opponent has parry equipment
+    const parry_weapons = defender.weapons.filter((weapon) => weapon.tags.includes('parry'))
+    const parry_armour = defender.armour.filter((armour) => armour.tags.includes('parry'))
+    if (debug) console.log("parry equipment", parry_weapons, parry_armour)
+
+    // Combine all parry equipment and combine all to hit rolls to determine if parry is possible, and if re-roll parry is available
+    const combined_parry_equipment = [...parry_weapons, ...parry_armour]
+    const combined_hit_roll = [...main_to_hit_roll, ...offhand_to_hit_roll]
+    const max_hit_roll = Math.max(...combined_hit_roll)
+    if (debug) console.log("max hit roll", max_hit_roll)
+
+    // If the defender has at least one weapon or armour with the parry tag, allow parry
+    if (debug) console.log("parry conditions", combined_parry_equipment.length > 0, max_hit_roll != 6, !combined_hit_roll.includes('auto hit'))
+    if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && !combined_hit_roll.includes('auto hit')) {
+      // If the defender has more than two weapons or armours with the parry tag, check for reroll parry tag and roll 2 dice
+      parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? rollDice(2) : rollDice(1)
+      if (debug) console.log("parry procced", parry_roll)
+      // Get the highest of the parry rolls, in case of a re-roll.
+      parry_roll = Math.max(...parry_roll)
+
+      // If parry roll is higher than the highest hit roll, parry is successful
+      let parry_successful = parry_roll > max_hit_roll
+
+      // If house rule is active, add WS to parry roll
+      if (addWSToParry) {
+        if (debug) console.log("parry roll + ws, max hit roll + ws", parry_roll, defender.ws, max_hit_roll, attacker.ws)
+        parry_successful = parry_roll + defender.ws > max_hit_roll + attacker.ws
+      }
+
+      // If the parry was successful, determine if it was a mainhand or offhand hit that should be negated.
+      if (main_to_hit_roll.includes(max_hit_roll) && parry_successful) {
+        main_hits -= main_hits > 0 ? 1 : 0
+        if (debug) console.log("main parry successful", main_hits)
+      } else if (parry_successful){
+        offhand_hits -= offhand_hits > 0 ? 1 : 0
+        if (debug) console.log("offhand parry successful", offhand_hits)
+      }
+    }
+  }
+  return [main_hits, offhand_hits]
 }
 
 const toWound = function (strength, toughness) {

@@ -3,9 +3,24 @@ import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
 import { runSimulateCombat } from './combat.js';
+import WarriorComponent from './WarriorComponent.jsx';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [warrior1, setWarrior1] = useState()
+  const [warrior2, setWarrior2] = useState()
+
+  const handleWarrior1Change = (formData) => {
+    handleWarriorChange(formData, setWarrior1);
+  }
+
+  const handleWarrior2Change = (formData) => {
+    handleWarriorChange(formData, setWarrior2);
+  }
+
+  const handleWarriorChange = (formData, setWarriorFunction) => {
+    setWarriorFunction(formData);
+  }
+
   return (
     <>
       <div>
@@ -18,19 +33,22 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <button onClick={() => runSimulateCombat()}>
+        <div>
+          <h2>Warrior 1</h2>
+          <WarriorComponent
+            handleWarriorChange={handleWarrior1Change}
+          />
+        </div>
+        <div>
+          <h2>Warrior 2</h2>
+          <WarriorComponent
+            handleWarriorChange={handleWarrior2Change}
+          />
+        </div>
+        <button onClick={() => runSimulateCombat(warrior1, warrior2)}>
           simulate combat
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
   )
 }
