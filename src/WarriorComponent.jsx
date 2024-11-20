@@ -14,7 +14,8 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         LD: 7,
         mainHand: 'handweapon',
         offHand: 'emptyHand',
-        selectedArmour: []
+        selectedArmour: [],
+        charger: false
     });
 
     useEffect(() => {
@@ -22,10 +23,10 @@ const WarriorComponent = ({ handleWarriorChange }) => {
     }, [formData])
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value, type, checked } = e.target;
         setFormData({
             ...formData,
-            [name]: value
+            [name]: type === 'checkbox' ? checked : value
         });
         //handleWarriorChange(formData)
     };
@@ -92,6 +93,10 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                     <option key={armourItem} value={armourItem}>{armourItem}</option>
                 ))}
             </select>
+        </div>
+        <div>
+            <label>Charger</label>
+            <input type="checkbox" name="charger" checked={formData.charger} onChange={handleChange} />
         </div>
       </form>
     );

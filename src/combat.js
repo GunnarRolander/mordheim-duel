@@ -9,7 +9,7 @@ export const runSimulateCombat = function (warrior1, warrior2) {
   const warrior_1 = createWarriorFromForm("warrior_1", warrior1)
   const warrior_2 = createWarriorFromForm("warrior_2", warrior2)
 
-  const no_charger = !warrior_1.charger && !warrior_2.charger
+  const no_charger = (!warrior_1.charger && !warrior_2.charger) || (warrior_1.charger && warrior_2.charger)
   const wins = {
     "warrior_1": 0,
     "warrior_2": 0
@@ -134,7 +134,7 @@ const createWarriorFromForm = function (name, formData) {
     weapons: equipped_weapons,
     armour: equipped_armour,
     armour_save: armour_save,
-    charger: false,
+    charger: formData.charger,
     stood_up: false
   }
 
