@@ -430,6 +430,10 @@ export const injuryPhase = function (attacker, defender, main_wounds, offhand_wo
       const highest_injury = injury(highest_injury_roll)
       defender.status = highest_injury
       if (debug) console.log("highest injury roll", highest_injury_roll, "injury", highest_injury)
+
+      if (defender.armour.some((armour) => armour.tags.includes('avoid stun')) && rollDice(1)[0] >= 4) {
+         defender.status = "knocked down"
+      }
     }
 
     // Remove wounds from defender
