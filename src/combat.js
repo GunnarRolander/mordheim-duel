@@ -4,33 +4,6 @@ const debug = false
 const addWSToParry = false
 const minusToHitOffhand = 0
 
-const createWarriorFromForm = function (name, formData) {
-
-  const equipped_weapons = [weapons[formData.mainHand]]
-  if (formData.offHand != 'emptyHand') equipped_weapons.push(weapons[formData.offHand])
-
-  const equipped_armour = formData.selectedArmour.map((type) => armour[type])
-  const armour_save = equipped_armour.reduce((acc, armour) => acc - armour.save, 7)
-
-  const warrior = {
-    name: name,
-    ws: formData.WS,
-    strength: formData.S,
-    toughness: formData.T,
-    attacks: formData.A,
-    wounds: formData.W,
-    initiative: formData.I,
-    status: "standing",
-    weapons: equipped_weapons,
-    armour: equipped_armour,
-    armour_save: armour_save,
-    charger: false,
-    stood_up: false
-  }
-
-  return warrior
-}
-
 export const runSimulateCombat = function (warrior1, warrior2) {
 
   const warrior_1 = createWarriorFromForm("warrior_1", warrior1)
@@ -133,78 +106,39 @@ const fightCombatRound = function (attacker, defender, first_round) {
     injury_bonus
   } = toWoundPhase(attacker, defender, main_hits, offhand_hits, first_round)
 
-  // To Wound
-  // Initiate variables, these will be updated in the to wound and armour save phases
-  let main_injury_roll = []
-  let offhand_injury_roll = []
-  let main_weapon = attacker.weapons[0]
-  let offhand_weapon = attacker.weapons[1]
+  const {
+    main_injury_roll,
+    offhand_injury_roll
+  } = injuryPhase(attacker, defender, main_wounds, offhand_wounds, injury_bonus)
 
-  // If the defender is stunned, auto OOA it.
-  if (defender.status == "stunned") {
-    main_wound_roll = ['coup de grace']
-    main_injury_roll = ['coup de grace']
-    defender.status = "out of action"
-    if (debug) console.log("defender stunnes - taken OOA")
-  } else {
-    // Injuries
-    if (debug) console.log("defender status", defender.status, "main wounds", main_wounds, "offhand wounds", offhand_wounds)
-
-    // Any unsaved wounds Auto-OOA the defender if it is knocked down
-    if (defender.status == "knocked down" && main_wounds + offhand_wounds > 0) {
-      defender.status = "out of action"
-      if (debug) console.log("defender knocked down - taken OOA")
-    } else if (main_wounds + offhand_wounds >= defender.wounds) {
-      // If the number of wounds inflicted is higher than the defenders wounds left, injuries are inflicted.
-      let main_injuries = main_wounds
-      let offhand_injuries = offhand_wounds
-
-      if (defender.wounds >= 3) {
-        // First remove offhand injuries, then main injuries
-        defender.wounds -= offhand_injuries
-        offhand_injuries = 0
-        // We now remove the remaining wounds to determine the number of injuries, and add +1 for bringing the defender to 0 wounds (from 1 -> 0)
-        main_injuries = main_injuries - defender.wounds + 1
-      } else if (defender.wounds == 2) {
-        switch (offhand_injuries) {
-          case 2:
-            // If offhand critted and caused 2 wounds, and the defender has 2 wounds, then 1 injury is caused by the offhand.
-            offhand_injuries = 1
-            break
-          case 1:
-            // If the offhand landed 1 wound and the main hand 1+ wounds, then the offhand injury is removed and all the wounds are considered main hand injuries.
-            offhand_injuries = 0
-            break
-          case 0:
-            // No offhand injuries, all wounds are main hand injuries, remove 1 wound to get a correct number of injury rolls.
-            main_injuries = main_injuries - 1
-            break
-        }
-      }
-
-      // Roll dice for main hand and offhand injuries
-      main_injury_roll = rollDice(main_injuries)
-      offhand_injury_roll = rollDice(offhand_injuries)
-      if (debug) console.log("main injury roll", main_injury_roll, "offhand injury roll", offhand_injury_roll)
-
-      // Apply concussion rule to injury rolls if the weapon has the concussion tag
-      if (main_weapon.tags.includes('concussion')) {main_injury_roll = main_injury_roll.map((roll) => roll == 2 ? 3 : roll)}
-      if (offhand_weapon && offhand_weapon.tags.includes('concussion')) {offhand_injury_roll = offhand_injury_roll.map((roll) => roll == 2 ? 3 : roll)}
-
-      // Determine the highest injury roll and apply the injury
-      const highest_injury_roll = Math.max(...[...main_injury_roll, ...offhand_injury_roll]) + injury_bonus
-      const highest_injury = injury(highest_injury_roll)
-      defender.status = highest_injury
-      if (debug) console.log("highest injury roll", highest_injury_roll, "injury", highest_injury)
-    }
-
-    // Remove wounds from defender
-    defender.wounds -= (main_wounds + offhand_wounds)
-    // If the defender has less than 1 wounds, set it to 1 to avoid negative wounds.
-    // This also makes the logic easier since 0 wounds and 1 wound is almost the same.
-    if (defender.wounds < 1) defender.wounds = 1
-  }
   return {'to_hit_rolls': [main_to_hit_roll, offhand_to_hit_roll], 'hits': [main_hits, offhand_hits], 'to_wound_rolls': [main_wound_roll, offhand_wound_roll], 'wounds': [main_wounds, offhand_wounds], 'armour_save_rolls': [main_armour_save_roll, offhand_armour_save_roll], 'injury_rolls': [main_injury_roll, offhand_injury_roll], 'parry_roll': parry_roll}
+}
+
+const createWarriorFromForm = function (name, formData) {
+
+  const equipped_weapons = [weapons[formData.mainHand]]
+  if (formData.offHand != 'emptyHand') equipped_weapons.push(weapons[formData.offHand])
+
+  const equipped_armour = formData.selectedArmour.map((type) => armour[type])
+  const armour_save = equipped_armour.reduce((acc, armour) => acc - armour.save, 7)
+
+  const warrior = {
+    name: name,
+    ws: formData.WS,
+    strength: formData.S,
+    toughness: formData.T,
+    attacks: formData.A,
+    wounds: formData.W,
+    initiative: formData.I,
+    status: "standing",
+    weapons: equipped_weapons,
+    armour: equipped_armour,
+    armour_save: armour_save,
+    charger: false,
+    stood_up: false
+  }
+
+  return warrior
 }
 
 function getRandomInt(min, max) {
@@ -429,6 +363,79 @@ export const toWoundPhase = function (attacker, defender, main_hits, offhand_hit
   return { main_wound_roll, offhand_wound_roll, main_wounds, offhand_wounds, main_armour_save_roll, offhand_armour_save_roll, injury_bonus, no_armour_save, extra_wounds }
 }
 
+export const injuryPhase = function (attacker, defender, main_wounds, offhand_wounds, injury_bonus) {
+  // Initiate variables, these will be updated in the to wound and armour save phases
+  let main_injury_roll = []
+  let offhand_injury_roll = []
+  let main_weapon = attacker.weapons[0]
+  let offhand_weapon = attacker.weapons[1]
+
+  // If the defender is stunned, auto OOA it.
+  if (defender.status == "stunned") {
+    main_injury_roll = ['coup de grace']
+    defender.status = "out of action"
+    if (debug) console.log("defender stunnes - taken OOA")
+  } else {
+    // Injuries
+    if (debug) console.log("defender status", defender.status, "main wounds", main_wounds, "offhand wounds", offhand_wounds)
+
+    // Any unsaved wounds Auto-OOA the defender if it is knocked down
+    if (defender.status == "knocked down" && main_wounds + offhand_wounds > 0) {
+      defender.status = "out of action"
+      if (debug) console.log("defender knocked down - taken OOA")
+    } else if (main_wounds + offhand_wounds >= defender.wounds) {
+      // If the number of wounds inflicted is higher than the defenders wounds left, injuries are inflicted.
+      let main_injuries = main_wounds
+      let offhand_injuries = offhand_wounds
+
+      if (defender.wounds >= 3) {
+        // First remove offhand injuries, then main injuries
+        defender.wounds -= offhand_injuries
+        offhand_injuries = 0
+        // We now remove the remaining wounds to determine the number of injuries, and add +1 for bringing the defender to 0 wounds (from 1 -> 0)
+        main_injuries = main_injuries - defender.wounds + 1
+      } else if (defender.wounds == 2) {
+        switch (offhand_injuries) {
+          case 2:
+            // If offhand critted and caused 2 wounds, and the defender has 2 wounds, then 1 injury is caused by the offhand.
+            offhand_injuries = 1
+            break
+          case 1:
+            // If the offhand landed 1 wound and the main hand 1+ wounds, then the offhand injury is removed and all the wounds are considered main hand injuries.
+            offhand_injuries = 0
+            break
+          case 0:
+            // No offhand injuries, all wounds are main hand injuries, remove 1 wound to get a correct number of injury rolls.
+            main_injuries = main_injuries - 1
+            break
+        }
+      }
+
+      // Roll dice for main hand and offhand injuries
+      main_injury_roll = rollDice(main_injuries)
+      offhand_injury_roll = rollDice(offhand_injuries)
+      if (debug) console.log("main injury roll", main_injury_roll, "offhand injury roll", offhand_injury_roll)
+
+      // Apply concussion rule to injury rolls if the weapon has the concussion tag
+      if (main_weapon.tags.includes('concussion')) {main_injury_roll = main_injury_roll.map((roll) => roll == 2 ? 3 : roll)}
+      if (offhand_weapon && offhand_weapon.tags.includes('concussion')) {offhand_injury_roll = offhand_injury_roll.map((roll) => roll == 2 ? 3 : roll)}
+
+      // Determine the highest injury roll and apply the injury
+      const highest_injury_roll = Math.max(...[...main_injury_roll, ...offhand_injury_roll]) + injury_bonus
+      const highest_injury = injury(highest_injury_roll)
+      defender.status = highest_injury
+      if (debug) console.log("highest injury roll", highest_injury_roll, "injury", highest_injury)
+    }
+
+    // Remove wounds from defender
+    defender.wounds -= (main_wounds + offhand_wounds)
+    // If the defender has less than 1 wounds, set it to 1 to avoid negative wounds.
+    // This also makes the logic easier since 0 wounds and 1 wound is almost the same.
+    if (defender.wounds < 1) defender.wounds = 1
+  }
+  return { main_injury_roll, offhand_injury_roll }
+}
+
 const ableToCrit = function (strength, toughness) {
   return strength >= toughness - 1
 }
@@ -466,15 +473,15 @@ const injury = function (injury_roll) {
   return "bugged"
 }
 
-const doRecovery = function (warrior) {
-// Recovery phase, stunned goes to knocked down, knocked down goes to standing
-if (warrior.status == "knocked down") {
-    warrior.status = "standing"
-    warrior.stood_up = true
-}
-if (warrior.status == "stunned") {
-    warrior.status = "knocked down"
-}
+export const doRecovery = function (warrior) {
+  // Recovery phase, stunned goes to knocked down, knocked down goes to standing
+  if (warrior.status == "knocked down") {
+      warrior.status = "standing"
+      warrior.stood_up = true
+  }
+  if (warrior.status == "stunned") {
+      warrior.status = "knocked down"
+  }
 }
 
 const whoStrikesFirst = function (warrior_1, warrior_2, first_turn) {

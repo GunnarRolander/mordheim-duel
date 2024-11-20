@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import { runSimulateCombat } from './combat.js';
 import WarriorComponent from './WarriorComponent.jsx';
 import { runTests } from './tests.js';
+import WinRateBar from './WinRateBar.jsx';
 
 function App() {
   const [warrior1, setWarrior1] = useState()
@@ -42,10 +41,12 @@ function App() {
                 handleWarriorChange={handleWarrior1Change}
               />
             </div>
-            <div style={{ padding: '3em'}}>
+            <div style={{ padding: '3em', width: '300px'}}>
               <h3>Result</h3>
-              <p>Warrior 1: {winRates.win_rate_warrior_1.toFixed(2)}%</p>
-              <p>Warrior 2: {winRates.win_rate_warrior_2.toFixed(2)}%</p>
+              <WinRateBar
+                percentage1={winRates.win_rate_warrior_1}
+                percentage2={winRates.win_rate_warrior_2}
+              />
             </div>
             <div>
               <h2>Warrior 2</h2>
