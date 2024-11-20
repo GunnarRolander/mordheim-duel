@@ -355,9 +355,14 @@ export const toWoundPhase = function (attacker, defender, main_hits, offhand_hit
     main_armour_save_roll = ['crit no armour save']
     offhand_armour_save_roll = ['crit no armour save']
   } else {
+
+    // Apply AP from weapons
+    const main_ap = main_weapon.ap ? main_weapon.ap : 0
+    const offhand_ap = offhand_weapon && offhand_weapon.ap ? offhand_weapon.ap : 0
+
     // Filter out unsaved wounds if roll is below the target armour save
-    main_wounds = main_armour_save_roll.filter((roll) => roll < modifyArmourSave(main_strength, defender.armour_save)).length
-    offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save)).length
+    main_wounds = main_armour_save_roll.filter((roll) => roll < modifyArmourSave(main_strength, defender.armour_save - main_ap)).length
+    offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save - offhand_ap)).length
   }
 
   return { main_wound_roll, offhand_wound_roll, main_wounds, offhand_wounds, main_armour_save_roll, offhand_armour_save_roll, injury_bonus, no_armour_save, extra_wounds }

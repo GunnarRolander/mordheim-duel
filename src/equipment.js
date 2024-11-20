@@ -1,4 +1,10 @@
 export const weapons = {
+  'dagger': {
+      strength_mod: 0,
+      type: "slashing",
+      tags: [],
+      ap: 1
+  },
   'handweapon': {
       strength_mod: 0,
       type: "slashing",
@@ -8,6 +14,12 @@ export const weapons = {
       strength_mod: 0,
       type: "slashing",
       tags: ['parry']
+  },
+  'axe': {
+      strength_mod: 0,
+      type: "slashing",
+      tags: [],
+      ap: -1
   },
   'club': {
       strength_mod: 0,
