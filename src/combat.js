@@ -124,12 +124,12 @@ const createWarriorFromForm = function (name, formData) {
 
   const warrior = {
     name: name,
-    ws: formData.WS,
-    strength: formData.S,
-    toughness: formData.T,
-    attacks: formData.A,
-    wounds: formData.W,
-    initiative: formData.I,
+    ws: parseInt(formData.WS),
+    strength: parseInt(formData.S),
+    toughness: parseInt(formData.T),
+    attacks: parseInt(formData.A),
+    wounds: parseInt(formData.W),
+    initiative: parseInt(formData.I),
     status: "standing",
     weapons: equipped_weapons,
     armour: equipped_armour,
