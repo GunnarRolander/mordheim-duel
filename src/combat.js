@@ -15,7 +15,7 @@ export const runSimulateCombat = function (warrior1, warrior2) {
     "warrior_2": 0
   }
   const number_of_simulations = 100000
-  const final_rounds = {}
+  const final_rounds = {'warrior_1': {}, 'warrior_2': {}}
   for (let i = 0; i < number_of_simulations; i++) {
     if (no_charger) {
       if (i % 2 == 0) {
@@ -27,9 +27,9 @@ export const runSimulateCombat = function (warrior1, warrior2) {
       }
     }
     const [winner, round] = warrior_1.charger ? simulateCombat(warrior_1, warrior_2) : simulateCombat(warrior_2, warrior_1)
-
+    const winner_round = final_rounds[winner.name]
     wins[winner.name] += 1
-    final_rounds[round] = final_rounds[round] ? final_rounds[round] + 1 : 1
+    winner_round[round] = winner_round[round] ? winner_round[round] + 1 : 1
   }
 
   const win_rate_warrior_1 = wins["warrior_1"] / number_of_simulations * 100
