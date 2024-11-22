@@ -1,10 +1,17 @@
 import { weapons, armour } from './equipment.js';
 const debug = false
 
-const addWSToParry = false
-const minusToHitOffhand = 0
-
-export const runSimulateCombat = function (warrior1, warrior2) {
+export const runSimulateCombat = function (warrior1, warrior2, house_rules={
+  minus1ToHitOffhand: false,
+  minus2ToHitOffhand: false,
+  minusToHitOffhand: 0,
+  minusToHitDW: false,
+  addWSToParry: false,
+  ogSpears: false
+}) {
+  house_rules.minusToHitOffhand = 0
+  if (house_rules.minus1ToHitOffhand) house_rules.minusToHitOffhand = 1
+  if (house_rules.minus2ToHitOffhand) house_rules.minusToHitOffhand = 2
 
   const warrior_1 = createWarriorFromForm("warrior_1", warrior1)
   const warrior_2 = createWarriorFromForm("warrior_2", warrior2)
@@ -26,7 +33,7 @@ export const runSimulateCombat = function (warrior1, warrior2) {
         warrior_2.charger = true
       }
     }
-    const [winner, round] = warrior_1.charger ? simulateCombat(warrior_1, warrior_2) : simulateCombat(warrior_2, warrior_1)
+    const [winner, round] = warrior_1.charger ? simulateCombat(warrior_1, warrior_2, house_rules) : simulateCombat(warrior_2, warrior_1, house_rules)
     const winner_round = final_rounds[winner.name]
     wins[winner.name] += 1
     winner_round[round] = winner_round[round] ? winner_round[round] + 1 : 1
@@ -43,7 +50,7 @@ export const runSimulateCombat = function (warrior1, warrior2) {
   return {win_rate_warrior_1, win_rate_warrior_2}
 }
 
-const simulateCombat = function (warrior_1_base, warrior_2_base) {
+const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
 
 
   // Parse and stringify to create a deep copy of the objects
@@ -67,10 +74,10 @@ const simulateCombat = function (warrior_1_base, warrior_2_base) {
       // The charger recovers on round 1, 3, 5 etc
       doRecovery(warrior_1)
     }
-    [attacker, defender] = whoStrikesFirst(warrior_1, warrior_2, first_round)
+    [attacker, defender] = whoStrikesFirst(warrior_1, warrior_2, first_round, house_rules)
 
-    const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender, first_round) : {}
-    const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker, first_round) : {}
+    const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender, first_round, house_rules) : {}
+    const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker, first_round, house_rules) : {}
     if (debug) console.log("End of round statuses", warrior_1.status, warrior_2.status, "fight done?", warrior_1.status == "out of action" || warrior_2.status == "out of action")
 
     // If any warrior is OOA the combat is over.
@@ -87,14 +94,14 @@ const simulateCombat = function (warrior_1_base, warrior_2_base) {
   return [winner, round_number]
 }
 
-const fightCombatRound = function (attacker, defender, first_round) {
+const fightCombatRound = function (attacker, defender, first_round, house_rules) {
   const {
     main_hits,
     offhand_hits,
     main_to_hit_roll,
     offhand_to_hit_roll,
     parry_roll
-  } = toHitPhase(attacker, defender)
+  } = toHitPhase(attacker, defender, house_rules)
 
   let {
     main_wound_roll,
@@ -171,7 +178,15 @@ const toHit = function (attacker_ws, defender_ws) {
   return 4
 }
 
-export const toHitPhase = function (attacker, defender) {
+export const toHitPhase = function (attacker, defender, house_rules={
+  minus1ToHitOffhand: false,
+  minus2ToHitOffhand: false,
+  minusToHitOffhand: 0,
+  minusToHitDW: false,
+  addWSToParry: false,
+  ogSpears: false
+}) {
+  const {minusToHitOffhand, minusToHitDW, addWSToParry} = house_rules
   let main_weapon = attacker.weapons[0]
   let offhand_weapon = attacker.weapons[1]
 
@@ -199,11 +214,6 @@ export const toHitPhase = function (attacker, defender) {
     // Roll to hit dice
     main_to_hit_roll = rollDice(attacker.attacks)
 
-    // Filter out any dice below the target to hit value
-    main_hits = main_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
-
-    if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
-
     // Roll for offhand weapon if available, this is done separately to make it easier to apply house rules
     offhand_to_hit_roll = offhand_weapon ? rollDice(1) : []
 
@@ -212,9 +222,17 @@ export const toHitPhase = function (attacker, defender) {
       offhand_to_hit_roll = offhand_to_hit_roll.map((roll) => roll - minusToHitOffhand)
     }
 
+    if (minusToHitDW && offhand_weapon) {
+      main_to_hit_roll = main_to_hit_roll.map((roll) => roll - 1)
+      offhand_to_hit_roll = offhand_to_hit_roll.map((roll) => roll - 1)
+    }
+
+    // Filter out any dice below the target to hit value
+    main_hits = main_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
+    if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
+
     // Filter out any dice below the target to hit value
     offhand_hits = offhand_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
-
     if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
 
     // Check if opponent has parry equipment
@@ -493,7 +511,8 @@ export const doRecovery = function (warrior) {
   }
 }
 
-const whoStrikesFirst = function (warrior_1, warrior_2, first_turn) {
+export const whoStrikesFirst = function (warrior_1, warrior_2, first_turn, house_rules) {
+  const {ogSpears} = house_rules
   const warrior_1_tags = warrior_1.weapons.map((weapon) => weapon.tags).flat()
   const warrior_2_tags = warrior_2.weapons.map((weapon) => weapon.tags).flat()
 
@@ -515,12 +534,21 @@ const whoStrikesFirst = function (warrior_1, warrior_2, first_turn) {
     return [warrior_1, warrior_2]
   }
 
-  // If it's the first turn the charger strikes first, unless the other warrior has the "strike first" tag, then it defaults to initiative
   if (first_turn) {
-    if (warrior_1.charger && !warrior_2_tags.includes('strike first')) {
-      return [warrior_1, warrior_2]
-    } else  if (warrior_2.charger && !warrior_1_tags.includes('strike first')) {
-      return [warrior_2, warrior_1]
+    // If ogSpears house rule is active, the warrior with the spear strikes first no matter the initiative/charger
+    if (ogSpears) {
+      if (warrior_1.weapons.some((weapon) => weapon.name == 'spear')) {
+        return [warrior_1, warrior_2]
+      } else if (warrior_2.weapons.some((weapon) => weapon.name == 'spear')) {
+        return [warrior_2, warrior_1]
+      }
+    } else {
+      // If it's the first turn the charger strikes first, unless the other warrior has the "strike first" tag, then it defaults to initiative
+      if (warrior_1.charger && !warrior_2_tags.includes('strike first')) {
+        return [warrior_1, warrior_2]
+      } else  if (warrior_2.charger && !warrior_1_tags.includes('strike first')) {
+        return [warrior_2, warrior_1]
+      }
     }
   }
 

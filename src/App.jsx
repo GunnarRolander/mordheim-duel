@@ -12,6 +12,21 @@ function App() {
     win_rate_warrior_1: 0,
     win_rate_warrior_2: 0
   })
+  const [houseRules, setHouseRules] = useState({
+    minus1ToHitOffhand: false,
+    minus2ToHitOffhand: false,
+    minusToHitDW: false,
+    addWSToParry: false,
+    ogSpears: false
+  })
+
+  const handleRuleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setHouseRules({
+        ...houseRules,
+        [name]: type === 'checkbox' ? checked : value
+    });
+};
 
   const handleWarrior1Change = (formData) => {
     handleWarriorChange(formData, setWarrior1);
@@ -26,7 +41,7 @@ function App() {
   }
 
   const runSimulation = () => {
-    const winRates = runSimulateCombat(warrior1, warrior2);
+    const winRates = runSimulateCombat(warrior1, warrior2, houseRules);
     setWinRates(winRates);
   }
 
@@ -56,9 +71,30 @@ function App() {
             </div>
           </div>
         </div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <h3>House Rules</h3>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'left'}}>
+              <label>Minus -1 to hit on offhand attack when dualwielding</label><br/>
+              <label>Minus -2 to hit on offhand attack when dualwielding</label><br/>
+              <label>Minus -1 to hit on all attacks when dualwielding</label><br/>
+              <label>Add WS to parry rolls</label><br/>
+              <label>Use original spear rules</label><br/>
+            </div>
+            <div>
+              <input type="checkbox" name="minus1ToHitOffhand" checked={houseRules.minus1ToHitOffhand} onChange={handleRuleChange} /><br/>
+              <input type="checkbox" name="minus2ToHitOffhand" checked={houseRules.minus2ToHitOffhand} onChange={handleRuleChange} /><br/>
+              <input type="checkbox" name="minusToHitDW" checked={houseRules.minusToHitDW} onChange={handleRuleChange} /><br/>
+              <input type="checkbox" name="addWSToParry" checked={houseRules.addWSToParry} onChange={handleRuleChange} /><br/>
+              <input type="checkbox" name="ogSpears" checked={houseRules.ogSpears} onChange={handleRuleChange} /><br/>
+            </div>
+          </div>
+        </div>
+        <br/>
         <button onClick={() => runSimulation()}>
           simulate combat
         </button>
+        <br/>
         <br/>
         <button onClick={() => runTests()}>
           run unit tests
