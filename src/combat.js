@@ -142,7 +142,8 @@ const createWarriorFromForm = function (name, formData) {
     armour: equipped_armour,
     armour_save: armour_save,
     charger: formData.charger,
-    stood_up: false
+    stood_up: false,
+    tags: formData.tags
   }
 
   return warrior
@@ -329,14 +330,10 @@ export const toWoundPhase = function (attacker, defender, main_hits, offhand_hit
     offhand_strength = attacker.strength
   }
 
-  // Roll to wound dice for main hand attacks, filter out those below the target value
+  // Roll to wound dice for main hand attacks,
   main_wound_roll = rollDice(main_hits)
-  main_wounds = main_wound_roll.filter((roll) => roll >= toWound(main_strength, defender.toughness)).length
-  if (debug) console.log("main wound roll, wounds", main_wound_roll, main_wounds)
-
-  // Same as above, but for offhand attacks
   offhand_wound_roll = rollDice(offhand_hits)
-  offhand_wounds = offhand_wound_roll.filter((roll) => roll >= toWound(offhand_strength, defender.toughness)).length
+  if (debug) console.log("main wound roll, wounds", main_wound_roll, main_wounds)
   if (debug) console.log("offhand wound roll, wounds", offhand_wound_roll, offhand_wounds)
 
   // Crits
@@ -345,6 +342,18 @@ export const toWoundPhase = function (attacker, defender, main_hits, offhand_hit
   let offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(offhand_strength, defender.toughness)
   const crit_roll = rollDice(1)
   if (debug) console.log("main crit, offhand crit, crit roll", main_crit, offhand_crit, crit_roll)
+
+  if (main_weapon.tags.includes('holy') && (defender.tags.includes('undead') || defender.tags.includes('possessed'))) {
+    main_wound_roll = main_wound_roll.map((roll) => roll + 1)
+  }
+  if (offhand_weapon && offhand_weapon.tags.includes('holy') && (defender.tags.includes('undead') || defender.tags.includes('possessed'))) {
+    offhand_wound_roll = offhand_wound_roll.map((roll) => roll + 1)
+  }
+
+    // filter out those below the target value
+  main_wounds = main_wound_roll.filter((roll) => roll >= toWound(main_strength, defender.toughness)).length
+  offhand_wounds = offhand_wound_roll.filter((roll) => roll >= toWound(offhand_strength, defender.toughness)).length
+
 
   // If no crits flag are set, set crits to false. No crits should only be used for testing.
   if (no_crits) {

@@ -61,6 +61,12 @@ export const weapons = {
       type: "bashing",
       tags: ['strike last']
   },
+  'sigmarite hammer': {
+      name: 'Sigmarite hammer',
+      strength_mod: 1,
+      type: "bashing",
+      tags: ['concussion', 'holy']
+  },
 }
 
 export const armour = {

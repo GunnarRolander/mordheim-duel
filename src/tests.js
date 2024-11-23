@@ -199,6 +199,19 @@ export const runTests = () => {
   console.assert(crit_no_armour_ratio == 0, "S3 vs T6, average number of crits with no armour save is not 0")
   console.assert(crit_bonus_injury_ratio == 0, "S3 vs T6, average number of crits with bonus injury is not 0")
 
+  // Test holy vs possessed/undead
+  warrior_2.toughness = 3
+  warrior_2.tags = ['undead']
+  warrior_1.weapons = [weapons['sigmarite hammer'], weapons['sigmarite hammer']]
+  result = testToWoundPhase(warrior_1, warrior_2, 1, 1, false, true)
+  main_wound_ratio = result.main_wound_ratio
+  off_wound_ratio = result.off_wound_ratio
+  console.log("S3 vs T3 (no crits), sigmarite hammer vs undead/possessed, average number of wounds:", main_wound_ratio)
+  console.log("S3 vs T3 (no crits), sigmarite hammer vs undead/possessed, average number of offhand wounds:", off_wound_ratio)
+  console.assert(main_wound_ratio > 0.825 && main_wound_ratio < 0.84, "S3 vs T3, holy vs undead, average number of wounds is not 0.8333")
+  console.assert(off_wound_ratio > 0.825 && off_wound_ratio < 0.84, "S3 vs T3, holy vs undead, average number of offhand wounds is not 0.8333")
+  warrior_1.weapons = [weapons['handweapon'], weapons['handweapon']]
+
   warrior_2.toughness = 3
   result = testInjuryPhase(warrior_1, warrior_2, 1, 0, 0)
   let knocked_ratio = result.knocked_ratio

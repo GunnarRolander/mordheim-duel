@@ -15,7 +15,8 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         mainHand: 'handweapon',
         offHand: 'emptyHand',
         selectedArmour: [],
-        charger: false
+        charger: false,
+        tags: []
     });
 
     useEffect(() => {
@@ -28,8 +29,20 @@ const WarriorComponent = ({ handleWarriorChange }) => {
             ...formData,
             [name]: type === 'checkbox' ? checked : value
         });
-        //handleWarriorChange(formData)
     };
+
+    const handleTagChange = (e) => {
+        const { name, checked } = e.target;
+        setFormData((prevFormData) => {
+            const newTags = checked
+                ? [...prevFormData.tags, name]
+                : prevFormData.tags.filter((tag) => tag !== name);
+            return {
+                ...prevFormData,
+                tags: newTags
+            };
+        });
+    }
 
     const handleMultiSelectChange = (e) => {
         const options = e.target.options;
@@ -94,9 +107,17 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                 ))}
             </select>
         </div>
-        <div>
-            <label>Charger</label>
-            <input type="checkbox" name="charger" checked={formData.charger} onChange={handleChange} />
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <div style={{ textAlign: 'left'}}>
+                <label>Charger</label><br/>
+                <label>Undead</label><br/>
+                <label>Possessed</label><br/>
+            </div>
+            <div>
+                <input type="checkbox" name="charger" checked={formData.charger} onChange={handleChange} /><br/>
+                <input type="checkbox" name="undead" checked={formData.tags.includes('undead')} onChange={handleTagChange} /><br/>
+                <input type="checkbox" name="possessed" checked={formData.tags.includes('possessed')} onChange={handleTagChange} /><br/>
+            </div>
         </div>
       </form>
     );
