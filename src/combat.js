@@ -111,7 +111,7 @@ const fightCombatRound = function (attacker, defender, first_round, house_rules)
     main_armour_save_roll,
     offhand_armour_save_roll,
     injury_bonus
-  } = toWoundPhase(attacker, defender, main_hits, offhand_hits, first_round)
+  } = toWoundPhase(attacker, defender, main_hits, offhand_hits, first_round, false, house_rules)
 
   const {
     main_injury_roll,
@@ -302,7 +302,7 @@ const toWound = function (strength, toughness) {
   return target_value
 }
 
-export const toWoundPhase = function (attacker, defender, main_hits, offhand_hits, first_round, no_crits = false) {
+export const toWoundPhase = function (attacker, defender, main_hits, offhand_hits, first_round, no_crits = false, house_rules = {}) {
     // To Wound
   // Initiate variables, these will be updated in the to wound and armour save phases
   let main_wound_roll = []
@@ -388,8 +388,8 @@ export const toWoundPhase = function (attacker, defender, main_hits, offhand_hit
     const offhand_ap = offhand_weapon && offhand_weapon.ap ? offhand_weapon.ap : 0
 
     // Filter out unsaved wounds if roll is below the target armour save
-    main_wounds = main_armour_save_roll.filter((roll) => roll < modifyArmourSave(main_strength, defender.armour_save - main_ap)).length
-    offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save - offhand_ap)).length
+    main_wounds = main_armour_save_roll.filter((roll) => roll < modifyArmourSave(main_strength, defender.armour_save - main_ap, house_rules)).length
+    offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save - offhand_ap, house_rules)).length
   }
 
   return { main_wound_roll, offhand_wound_roll, main_wounds, offhand_wounds, main_armour_save_roll, offhand_armour_save_roll, injury_bonus, no_armour_save, extra_wounds }
@@ -489,10 +489,14 @@ const getCrit = function (dice_roll) {
   return [false, 0, 0]
 }
 
-const modifyArmourSave = function (attacker_strength, armour_save) {
-const ap = attacker_strength > 3 ? attacker_strength - 3 : 0
-const armour_save_target = armour_save + ap
-return armour_save_target
+const modifyArmourSave = function (attacker_strength, armour_save, house_rules) {
+  const {noStrengthBasedAP, ap5} = house_rules
+  if (noStrengthBasedAP) return armour_save
+
+  const AP_strength = ap5 ? 4 : 3
+  const ap = attacker_strength > AP_strength ? attacker_strength - AP_strength : 0
+  const armour_save_target = armour_save + ap
+  return armour_save_target
 }
 
 const injury = function (injury_roll) {

@@ -17,7 +17,9 @@ function App() {
     minus2ToHitOffhand: false,
     minusToHitDW: false,
     addWSToParry: false,
-    ogSpears: false
+    ogSpears: false,
+    ap5: false,
+    noStrengthBasedAP: false
   })
 
   const handleRuleChange = (e) => {
@@ -80,6 +82,8 @@ function App() {
               <label>Minus -1 to hit on all attacks when dualwielding</label><br/>
               <label>Add WS to parry rolls</label><br/>
               <label>Use original spear rules</label><br/>
+              <label>AP starts at S5</label><br/>
+              <label>No strengthbased AP</label><br/>
             </div>
             <div>
               <input type="checkbox" name="minus1ToHitOffhand" checked={houseRules.minus1ToHitOffhand} onChange={handleRuleChange} /><br/>
@@ -87,6 +91,8 @@ function App() {
               <input type="checkbox" name="minusToHitDW" checked={houseRules.minusToHitDW} onChange={handleRuleChange} /><br/>
               <input type="checkbox" name="addWSToParry" checked={houseRules.addWSToParry} onChange={handleRuleChange} /><br/>
               <input type="checkbox" name="ogSpears" checked={houseRules.ogSpears} onChange={handleRuleChange} /><br/>
+              <input type="checkbox" name="ap5" checked={houseRules.ap5} onChange={handleRuleChange} /><br/>
+              <input type="checkbox" name="noStrengthBasedAP" checked={houseRules.noStrengthBasedAP} onChange={handleRuleChange} /><br/>
             </div>
           </div>
         </div>
