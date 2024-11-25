@@ -86,6 +86,10 @@ export const armour = {
     tags: [],
     save: 2
   },
+  'gromril armour': {
+    tags: [],
+    save: 3
+  },
   'helmet': {
     tags: ['avoid stun'],
     save: 0

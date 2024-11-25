@@ -127,7 +127,6 @@ const createWarriorFromForm = function (name, formData) {
   if (formData.offHand != 'emptyHand') equipped_weapons.push(weapons[formData.offHand])
 
   const equipped_armour = formData.selectedArmour.map((type) => armour[type])
-  const armour_save = equipped_armour.reduce((acc, armour) => acc - armour.save, 7)
 
   const warrior = {
     name: name,
@@ -140,7 +139,7 @@ const createWarriorFromForm = function (name, formData) {
     status: "standing",
     weapons: equipped_weapons,
     armour: equipped_armour,
-    armour_save: armour_save,
+    armour_save: formData.armourSave,
     charger: formData.charger,
     stood_up: false,
     tags: formData.tags

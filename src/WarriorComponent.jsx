@@ -1,6 +1,7 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
 import { weapons, armour } from './equipment.js';
+import ArmourComponent from './ArmourComponent.jsx';
 
 const WarriorComponent = ({ handleWarriorChange }) => {
     const [formData, setFormData] = useState({
@@ -16,7 +17,8 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         offHand: 'emptyHand',
         selectedArmour: [],
         charger: false,
-        tags: []
+        tags: [],
+        armourSave: 7
     });
 
     useEffect(() => {
@@ -44,19 +46,13 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         });
     }
 
-    const handleMultiSelectChange = (e) => {
-        const options = e.target.options;
-        const selectedOptions = [];
-        for (let i = 0; i < options.length; i++) {
-            if (options[i].selected) {
-                selectedOptions.push(options[i].value);
-            }
-        }
-        setFormData({
-            ...formData,
-            selectedArmour: selectedOptions
-        });
-    };
+    const handleArmourChange = (armourData) => {
+        setFormData((prevFormData) => ({
+            ...prevFormData,
+            selectedArmour: armourData.selectedArmour,
+            armourSave: armourData.armourSave
+        }));
+    }
 
     return (
       <form>
@@ -82,41 +78,30 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                 <input type="number" name="LD" value={formData.LD} onChange={handleChange} min="0" max="10" style={{ width: '2em' }} />
             </div>
         </div>
-        <div>
-            <label>Main hand </label>
-            <select name="mainHand" value={formData.mainHand} onChange={handleChange}>
-                {Object.keys(weapons).map((weapon) => (
-                    <option key={weapon} value={weapon}>{weapon}</option>
-                ))}
-            </select>
-        </div>
-        <div>
-            <label>Offhand </label>
-            <select name="offHand" value={formData.offHand} onChange={handleChange}>
-                <option key="emptyOffhand" value="emptyHand">No weapon</option>
-                {Object.keys(weapons).map((weapon) => (
-                    <option key={weapon} value={weapon}>{weapon}</option>
-                ))}
-            </select>
-        </div>
-        <div>
-            <label>Armour </label>
-            <select multiple name="selectedArmour" value={formData.selectedArmour} onChange={handleMultiSelectChange}>
-                {Object.keys(armour).map((armourItem) => (
-                    <option key={armourItem} value={armourItem}>{armourItem}</option>
-                ))}
-            </select>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+        <ArmourComponent handleArmourChange={handleArmourChange} />
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div style={{ textAlign: 'left'}}>
+                <label>Main hand </label><br/>
+                <label>Offhand </label><br/>
                 <label>Charger</label><br/>
                 <label>Undead</label><br/>
                 <label>Possessed</label><br/>
             </div>
             <div>
-                <input type="checkbox" name="charger" checked={formData.charger} onChange={handleChange} /><br/>
-                <input type="checkbox" name="undead" checked={formData.tags.includes('undead')} onChange={handleTagChange} /><br/>
-                <input type="checkbox" name="possessed" checked={formData.tags.includes('possessed')} onChange={handleTagChange} /><br/>
+                <select style={{ float: 'right' }} name="mainHand" value={formData.mainHand} onChange={handleChange}>
+                    {Object.keys(weapons).map((weapon) => (
+                        <option key={weapon} value={weapon}>{weapon}</option>
+                    ))}
+                </select><br/>
+                <select style={{ float: 'right' }} name="offHand" value={formData.offHand} onChange={handleChange}>
+                    <option key="emptyOffhand" value="emptyHand">No weapon</option>
+                    {Object.keys(weapons).map((weapon) => (
+                        <option key={weapon} value={weapon}>{weapon}</option>
+                    ))}
+                </select><br/>
+                <input style={{ float: 'right' }} type="checkbox" name="charger" checked={formData.charger} onChange={handleChange} /><br/>
+                <input style={{ float: 'right' }} type="checkbox" name="undead" checked={formData.tags.includes('undead')} onChange={handleTagChange} /><br/>
+                <input style={{ float: 'right' }} type="checkbox" name="possessed" checked={formData.tags.includes('possessed')} onChange={handleTagChange} /><br/>
             </div>
         </div>
       </form>
