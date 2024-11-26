@@ -21,6 +21,7 @@ function App() {
     ap5: false,
     noStrengthBasedAP: false
   })
+  const [nrOfSimulations, setNrOfSimulations] = useState(100000)
 
   const handleRuleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -42,8 +43,8 @@ function App() {
     setWarriorFunction(formData);
   }
 
-  const runSimulation = () => {
-    const winRates = runSimulateCombat(warrior1, warrior2, houseRules);
+  const runSimulation = (nrOfSimulations) => {
+    const winRates = runSimulateCombat(warrior1, warrior2, houseRules, nrOfSimulations);
     setWinRates(winRates);
   }
 
@@ -96,8 +97,13 @@ function App() {
             </div>
           </div>
         </div>
+        <div>
+          <h3>Simulation parameters</h3>
+          <label>Number of simulations  </label>
+          <input type="number" name="nrOfSimulations" value={nrOfSimulations} onChange={(e) => setNrOfSimulations(e.target.value)} min="0" max="1000000000" style={{ width: '7em' }} />
+        </div>
         <br/>
-        <button onClick={() => runSimulation()}>
+        <button onClick={() => runSimulation(nrOfSimulations)}>
           simulate combat
         </button>
         <br/>
