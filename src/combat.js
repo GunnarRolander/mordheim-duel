@@ -8,7 +8,7 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
   minusToHitDW: false,
   addWSToParry: false,
   ogSpears: false
-}) {
+}, nrOfSimulations=100000) {
   house_rules.minusToHitOffhand = 0
   if (house_rules.minus1ToHitOffhand) house_rules.minusToHitOffhand = 1
   if (house_rules.minus2ToHitOffhand) house_rules.minusToHitOffhand = 2
@@ -21,7 +21,7 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
     "warrior_1": 0,
     "warrior_2": 0
   }
-  const number_of_simulations = 100000
+  const number_of_simulations = nrOfSimulations
   const final_rounds = {'warrior_1': {}, 'warrior_2': {}}
   for (let i = 0; i < number_of_simulations; i++) {
     if (no_charger) {
