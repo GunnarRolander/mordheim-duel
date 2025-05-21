@@ -59,11 +59,12 @@ function App() {
                 handleWarriorChange={handleWarrior1Change}
               />
             </div>
-            <div style={{ padding: '3em', width: '300px'}}>
+            <div style={{ 'padding-left': '3em', 'padding-right': '3em', 'padding-bottom': '1em', width: '300px'}}>
               <h3>Result</h3>
               <WinRateBar
-                percentage1={winRates.win_rate_warrior_1}
-                percentage2={winRates.win_rate_warrior_2}
+                percentage1={winRates.win_rate_warrior_1 || 50}
+                percentage2={winRates.win_rate_warrior_2 || 50}
+                rounds={winRates.final_rounds}
               />
             </div>
             <div>

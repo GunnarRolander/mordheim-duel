@@ -47,7 +47,7 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
   console.log("warrior_2 win rate: " + win_rate_warrior_2 + "%")
   console.log(final_rounds)
 
-  return {win_rate_warrior_1, win_rate_warrior_2}
+  return {win_rate_warrior_1, win_rate_warrior_2, final_rounds}
 }
 
 const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
