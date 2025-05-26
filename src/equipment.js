@@ -12,6 +12,13 @@ export const weapons = {
       type: "slashing",
       tags: []
   },
+  'ithilmar_handweapon': {
+      name: 'ithilmar hand weapon',
+      strength_mod: 0,
+      init_mod: 1,
+      type: "slashing",
+      tags: []
+  },
   'sword': {
       name: 'sword',
       strength_mod: 0,

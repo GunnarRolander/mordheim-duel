@@ -50,15 +50,94 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
   return {win_rate_warrior_1, win_rate_warrior_2, final_rounds}
 }
 
+// To handle different initiative attacks, set up the attack slots for each warrior
+// then sort the attacks in initiative order, instead of sorting the warriors.
+// Make sure to save status of the target at the start of round, so no auto-OOA's occur due to timing differences.
+const setUpAttacks = function (attacker, defender) {
+  for (let i = 0; i < attacker.attacks; i++) {
+    attacker.attack_slots = [{weapon: attacker.weapons[0], ws: attacker.ws, strength: attacker.strength, initiative: attacker.initiative, source: attacker.name, target: defender.name, offHand: false}]
+  }
+  if (attacker.weapons[1]) {
+    attacker.attack_slots.push({weapon: attacker.weapons[1], ws: attacker.ws, strength: attacker.strength, initiative: attacker.initiative, source: attacker.name, target: defender.name, offHand: true})
+  }
+  return attacker
+}
+
+const setInitiativeOfAttacks = function (attack, warrior) {
+  let initiative = attack.initiative + attack.weapon.initiative_mod || 0
+
+  // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
+  if (attack.weapon.tags.includes('strike first') || warrior.charged) {
+    initiative = 99
+  }
+
+  // If the weapon of an attack has a tag that indicates it should strike last, set the initiative to -1
+  if (attack.weapon.tags.includes('strike last')) {
+    initiative = -1
+  }
+
+  if (warrior.stood_up) {
+    initiative = -2
+  }
+  
+  return initiative
+}
+
+const orderAttacksByInitiative = function (attacker, defender) {
+  const tie_rolls = {}
+
+  //consolidate the attack slots into a single array
+  const all_attack_slots = attacker.attack_slots.concat(defender.attack_slots)
+  // Sort the attack slots by initiative, highest first, if initiative is the same, sort by offhand with true as last
+  all_attack_slots.sort((a, b) => {
+    const warrior_a = a.source === attacker.name ? attacker : defender
+    const warrior_b = b.source === attacker.name ? attacker : defender
+
+    // Add initiative modifiers from the weapon, if available
+    const initiative_a = setInitiativeOfAttacks(a, warrior_a)
+    const initiative_b = setInitiativeOfAttacks(b, warrior_b)
+
+    // If the initiative is the same, check if the source is the same
+    if (initiative_a === initiative_b) {
+      if (a.source === b.source) {
+        // If both attacks are from the same source, sort by offhand
+        return a.offHand - b.offHand; // false (0) comes before true (1)
+      }
+      const tie_roll = tie_rolls[initiative_a] || rollDice(1)[0] >= 4 ? a.source : b.source;
+      tie_rolls[initiative_a] = tie_roll;
+
+      if (tie_roll === a.source) {
+        return -1; // a comes first
+      } else if (tie_roll === b.source) {
+        return 1; // b comes first
+      }
+    }
+    return initiative_b - initiative_a; // highest initiative first
+  })
+  //group attack slots by source and initiative
+  const grouped_attacks = []
+  const current_slot_tag = "initiative-source"
+  const current_slot = []
+  all_attack_slots.forEach((attack) => {
+    const tag = attack.initiative + "-" + attack.source
+    if (current_slot_tag !== tag) {
+      if (current_slot.length > 0) {
+        grouped_attacks.push(current_slot);
+      }
+      current_slot_tag = tag;
+      current_slot.length = 0; // Clear the current slot
+    }
+    current_slot.push(attack);
+  });
+}
+
 const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
-
-
   // Parse and stringify to create a deep copy of the objects
   const warrior_1 = JSON.parse(JSON.stringify(warrior_1_base))
   const warrior_2 = JSON.parse(JSON.stringify(warrior_2_base))
 
-  let attacker = warrior_1
-  let defender = warrior_2
+  let attacker = setUpAttacks(warrior_1)
+  let defender = setUpAttacks(warrior_2)
   let round_number = 0
   let fight_done = false
   let first_round = true
@@ -74,6 +153,9 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
       // The charger recovers on round 1, 3, 5 etc
       doRecovery(warrior_1)
     }
+
+
+
     [attacker, defender] = whoStrikesFirst(warrior_1, warrior_2, first_round, house_rules)
 
     const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender, first_round, house_rules) : {}
