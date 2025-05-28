@@ -1,4 +1,4 @@
-import { weapons, armour } from './equipment.js';
+import { weapons, armour } from './equipment.js'
 const debug = false
 
 export const runSimulateCombat = function (warrior1, warrior2, house_rules={
@@ -53,18 +53,64 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
 // To handle different initiative attacks, set up the attack slots for each warrior
 // then sort the attacks in initiative order, instead of sorting the warriors.
 // Make sure to save status of the target at the start of round, so no auto-OOA's occur due to timing differences.
-const setUpAttacks = function (attacker, defender) {
+export const setUpAttacks = function (attacker, defender) {
+  attacker.attack_slots = []
   for (let i = 0; i < attacker.attacks; i++) {
-    attacker.attack_slots = [{weapon: attacker.weapons[0], ws: attacker.ws, strength: attacker.strength, initiative: attacker.initiative, source: attacker.name, target: defender.name, offHand: false}]
+    attacker.attack_slots.push({
+      weapon: attacker.weapons[0],
+      ws: attacker.ws,
+      strength: attacker.strength, 
+      initiative: attacker.initiative, 
+      source: attacker.name, 
+      target: defender.name, 
+      offHand: false,
+      injury_bonus: 0,
+      injury_roll: 0,
+      injury: '',
+      crit: false,
+      hit: false,
+      wounded: false,
+      unsaved_wounds: 0,
+      wounds_caused: 0,
+      result: '',
+      to_hit_roll: 0,
+      to_wound_roll: 0,
+      armour_save_roll: 0,
+      no_armour_save: false,
+      parry_roll: 0,
+    })
   }
   if (attacker.weapons[1]) {
-    attacker.attack_slots.push({weapon: attacker.weapons[1], ws: attacker.ws, strength: attacker.strength, initiative: attacker.initiative, source: attacker.name, target: defender.name, offHand: true})
+    attacker.attack_slots.push({
+      weapon: attacker.weapons[1], 
+      ws: attacker.ws, 
+      strength: attacker.strength, 
+      initiative: attacker.initiative, 
+      source: attacker.name, 
+      target: defender.name, 
+      offHand: true,
+      injury_bonus: 0,
+      injury_roll: 0,
+      injury: '',
+      crit: false,
+      hit: false,
+      wounded: false,
+      unsaved_wounds: 0,
+      wounds_caused: 0,
+      result: '',
+      to_hit_roll: 0,
+      to_wound_roll: 0,
+      armour_save_roll: 0,
+      no_armour_save: false,
+      parry_roll: 0,
+    })
   }
   return attacker
 }
 
 const setInitiativeOfAttacks = function (attack, warrior) {
-  let initiative = attack.initiative + attack.weapon.initiative_mod || 0
+  let initiative = attack.initiative
+  initiative += attack.weapon.initiative_mod ? attack.weapon.initiative_mod : 0
 
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
   if (attack.weapon.tags.includes('strike first') || warrior.charged) {
@@ -79,7 +125,7 @@ const setInitiativeOfAttacks = function (attack, warrior) {
   if (warrior.stood_up) {
     initiative = -2
   }
-  
+
   return initiative
 }
 
@@ -101,48 +147,51 @@ const orderAttacksByInitiative = function (attacker, defender) {
     if (initiative_a === initiative_b) {
       if (a.source === b.source) {
         // If both attacks are from the same source, sort by offhand
-        return a.offHand - b.offHand; // false (0) comes before true (1)
+        return a.offHand - b.offHand // false (0) comes before true (1)
       }
-      const tie_roll = tie_rolls[initiative_a] || rollDice(1)[0] >= 4 ? a.source : b.source;
-      tie_rolls[initiative_a] = tie_roll;
+      const tie_roll = tie_rolls[initiative_a] || rollDice(1)[0] >= 4 ? a.source : b.source
+      tie_rolls[initiative_a] = tie_roll
 
       if (tie_roll === a.source) {
-        return -1; // a comes first
+        return -1 // a comes first
       } else if (tie_roll === b.source) {
-        return 1; // b comes first
+        return 1 // b comes first
       }
     }
-    return initiative_b - initiative_a; // highest initiative first
+    return initiative_b - initiative_a // highest initiative first
   })
+
   //group attack slots by source and initiative
   const grouped_attacks = []
-  const current_slot_tag = "initiative-source"
+  let current_slot_tag = "initiative-source"
   const current_slot = []
-  all_attack_slots.forEach((attack) => {
+  for (const attack of all_attack_slots) {
     const tag = attack.initiative + "-" + attack.source
     if (current_slot_tag !== tag) {
       if (current_slot.length > 0) {
-        grouped_attacks.push(current_slot);
+        grouped_attacks.push(JSON.parse(JSON.stringify(current_slot)))
       }
-      current_slot_tag = tag;
-      current_slot.length = 0; // Clear the current slot
+      current_slot_tag = tag
+      current_slot.length = 0 // Clear the current slot
     }
-    current_slot.push(attack);
-  });
+    current_slot.push(attack)
+  }
+  grouped_attacks.push(current_slot)
+
+  return grouped_attacks
 }
 
 const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
   // Parse and stringify to create a deep copy of the objects
-  const warrior_1 = JSON.parse(JSON.stringify(warrior_1_base))
-  const warrior_2 = JSON.parse(JSON.stringify(warrior_2_base))
+  let warrior_1 = JSON.parse(JSON.stringify(warrior_1_base))
+  let warrior_2 = JSON.parse(JSON.stringify(warrior_2_base))
 
-  let attacker = setUpAttacks(warrior_1)
-  let defender = setUpAttacks(warrior_2)
+  
   let round_number = 0
   let fight_done = false
   let first_round = true
   const fight_log = []
-
+  
   while (!fight_done) {
     round_number += 1
     // Recovery phase
@@ -153,13 +202,21 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
       // The charger recovers on round 1, 3, 5 etc
       doRecovery(warrior_1)
     }
-
-
-
-    [attacker, defender] = whoStrikesFirst(warrior_1, warrior_2, first_round, house_rules)
-
-    const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender, first_round, house_rules) : {}
-    const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker, first_round, house_rules) : {}
+    warrior_1 = setUpAttacks(warrior_1, warrior_2)
+    warrior_2 = setUpAttacks(warrior_2, warrior_1)
+    
+    const grouped_attacks = orderAttacksByInitiative(warrior_1, warrior_2)
+    
+    for (const attack_group of grouped_attacks) {
+      const attacker = attack_group[0].source === warrior_1.name ? warrior_1 : warrior_2
+      const defender = attack_group[0].target === warrior_2.name ? warrior_2 : warrior_1
+      
+      fightCombatRound(attacker, defender, attack_group, first_round, house_rules)
+    }
+    
+    //[attacker, defender] = whoStrikesFirst(warrior_1, warrior_2, first_round, house_rules)
+    //const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender, first_round, house_rules) : {}
+    //const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker, first_round, house_rules) : {}
     if (debug) console.log("End of round statuses", warrior_1.status, warrior_2.status, "fight done?", warrior_1.status == "out of action" || warrior_2.status == "out of action")
 
     // If any warrior is OOA the combat is over.
@@ -169,38 +226,29 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
     }
     first_round = false
 
-    fight_log.push({'round': round_number, 'attacker_round': attackers_round, 'defender_round': defenders_round, w1s: warrior_1.status, w2s: warrior_2.status, attacker: attacker.name, defender: defender.name})
+    fight_log.push({'round': round_number, w1s: warrior_1.status, w2s: warrior_2.status})
   }
   if (debug) console.log(fight_log)
   const winner = warrior_1.status == "out of action" ? warrior_2 : warrior_1
   return [winner, round_number]
 }
 
-const fightCombatRound = function (attacker, defender, first_round, house_rules) {
-  const {
-    main_hits,
-    offhand_hits,
-    main_to_hit_roll,
-    offhand_to_hit_roll,
-    parry_roll
-  } = toHitPhase(attacker, defender, house_rules)
+const fightCombatRound = function (attacker, defender, attack_group, first_round, house_rules) {
+  if (attacker.status != "standing") {
+    for (const attack of attack_group) {
+      attack.result = "Attacker is not standing, skipping attack"
+      if (debug) console.log(attacker.name + " is not standing, skipping attack")
+    }
+    return attack_group
+  }  
 
-  let {
-    main_wound_roll,
-    offhand_wound_roll,
-    main_wounds,
-    offhand_wounds,
-    main_armour_save_roll,
-    offhand_armour_save_roll,
-    injury_bonus
-  } = toWoundPhase(attacker, defender, main_hits, offhand_hits, first_round, false, house_rules)
+  toHitPhase(attacker, defender, attack_group, house_rules)
 
-  const {
-    main_injury_roll,
-    offhand_injury_roll
-  } = injuryPhase(attacker, defender, main_wounds, offhand_wounds, injury_bonus)
+  toWoundPhase(attacker, defender, attack_group, first_round, false, house_rules)
 
-  return {'to_hit_rolls': [main_to_hit_roll, offhand_to_hit_roll], 'hits': [main_hits, offhand_hits], 'to_wound_rolls': [main_wound_roll, offhand_wound_roll], 'wounds': [main_wounds, offhand_wounds], 'armour_save_rolls': [main_armour_save_roll, offhand_armour_save_roll], 'injury_rolls': [main_injury_roll, offhand_injury_roll], 'parry_roll': parry_roll}
+  injuryPhase(attacker, defender, attack_group)
+
+  return attack_group
 }
 
 const createWarriorFromForm = function (name, formData) {
@@ -232,14 +280,14 @@ const createWarriorFromForm = function (name, formData) {
 
 function getRandomInt(min, max) {
   // Create byte array and fill with 1 random number
-  var byteArray = new Uint8Array(1);
-  window.crypto.getRandomValues(byteArray);
+  var byteArray = new Uint8Array(1)
+  window.crypto.getRandomValues(byteArray)
 
-  var range = max - min + 1;
-  var max_range = 256;
+  var range = max - min + 1
+  var max_range = 256
   if (byteArray[0] >= Math.floor(max_range / range) * range)
-      return getRandomInt(min, max);
-  return min + (byteArray[0] % range);
+      return getRandomInt(min, max)
+  return min + (byteArray[0] % range)
 }
 
 const rollDice = function (number_of_dice) {
@@ -260,7 +308,7 @@ const toHit = function (attacker_ws, defender_ws) {
   return 4
 }
 
-export const toHitPhase = function (attacker, defender, house_rules={
+export const toHitPhase = function (attacker, defender, attack_group, house_rules={
   minus1ToHitOffhand: false,
   minus2ToHitOffhand: false,
   minusToHitOffhand: 0,
@@ -269,94 +317,70 @@ export const toHitPhase = function (attacker, defender, house_rules={
   ogSpears: false
 }) {
   const {minusToHitOffhand, minusToHitDW, addWSToParry} = house_rules
-  let main_weapon = attacker.weapons[0]
-  let offhand_weapon = attacker.weapons[1]
-
-  if (debug) console.log("weapons", main_weapon, offhand_weapon)
-
+  
   // Initiate variables, these will be updated in the to hit, to wound and armour save phases
-  let main_hits = 0
-  let offhand_hits = 0
-  let main_to_hit_roll = []
-  let offhand_to_hit_roll = []
-  let parry_roll = []
-
-  // Auto hit if the defender is knocked down or stunned
-  if (defender.status == "knocked down" || defender.status == "stunned") {
-      main_hits = attacker.attacks
-      main_to_hit_roll = ['auto hit']
-      if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
-
-      if (offhand_weapon) {
-        offhand_to_hit_roll = ['auto hit']
-        offhand_hits = 1
-        if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
+  for (const attack of attack_group) {
+    const weapon = attack.weapon
+    const offhand = attack.offHand
+    
+    if (defender.old_status == "knocked down" || defender.old_status == "stunned") {
+      attack.to_hit_roll = ['auto hit']
+      attack.hit = true
+    } else {
+      attack.to_hit_roll = rollDice(1)[0]
+      attack.to_hit_roll += weapon.hit_mod ? weapon.hit_mod : 0 
+      
+      // Apply offhand house rules, if active
+      if (offhand && minusToHitOffhand > 0) {
+        attack.to_hit_roll = attack.to_hit_roll - minusToHitOffhand
       }
-  } else {
-    // Roll to hit dice
-    main_to_hit_roll = rollDice(attacker.attacks)
-
-    // Roll for offhand weapon if available, this is done separately to make it easier to apply house rules
-    offhand_to_hit_roll = offhand_weapon ? rollDice(1) : []
-
-    // Apply offhand house rules, if active
-    if (minusToHitOffhand > 0) {
-      offhand_to_hit_roll = offhand_to_hit_roll.map((roll) => roll - minusToHitOffhand)
-    }
-
-    if (minusToHitDW && offhand_weapon) {
-      main_to_hit_roll = main_to_hit_roll.map((roll) => roll - 1)
-      offhand_to_hit_roll = offhand_to_hit_roll.map((roll) => roll - 1)
-    }
-
-    // Filter out any dice below the target to hit value
-    main_hits = main_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
-    if (debug) console.log("main to hit, hits", main_to_hit_roll, main_hits)
-
-    // Filter out any dice below the target to hit value
-    offhand_hits = offhand_to_hit_roll.filter((roll) => roll >= toHit(attacker.ws, defender.ws)).length
-    if (debug) console.log("offhand to hit, hits", offhand_to_hit_roll, offhand_hits)
-
-    // Check if opponent has parry equipment
-    const parry_weapons = defender.weapons.filter((weapon) => weapon.tags.includes('parry'))
-    const parry_armour = defender.armour.filter((armour) => armour.tags.includes('parry'))
-    if (debug) console.log("parry equipment", parry_weapons, parry_armour)
-
-    // Combine all parry equipment and combine all to hit rolls to determine if parry is possible, and if re-roll parry is available
-    const combined_parry_equipment = [...parry_weapons, ...parry_armour]
-    const combined_hit_roll = [...main_to_hit_roll, ...offhand_to_hit_roll]
-    const max_hit_roll = Math.max(...combined_hit_roll)
-    if (debug) console.log("max hit roll", max_hit_roll)
-
-    // If the defender has at least one weapon or armour with the parry tag, allow parry
-    if (debug) console.log("parry conditions", combined_parry_equipment.length > 0, max_hit_roll != 6, !combined_hit_roll.includes('auto hit'))
-    if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && !combined_hit_roll.includes('auto hit')) {
-      // If the defender has more than two weapons or armours with the parry tag, check for reroll parry tag and roll 2 dice
-      parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? rollDice(2) : rollDice(1)
-      if (debug) console.log("parry procced", parry_roll)
-      // Get the highest of the parry rolls, in case of a re-roll.
-      parry_roll = Math.max(...parry_roll)
-
-      // If parry roll is higher than the highest hit roll, parry is successful
-      let parry_successful = parry_roll > max_hit_roll
-
-      // If house rule is active, add WS to parry roll
-      if (addWSToParry) {
-        if (debug) console.log("parry roll + ws, max hit roll + ws", parry_roll, defender.ws, max_hit_roll, attacker.ws)
-        parry_successful = parry_roll + defender.ws > max_hit_roll + attacker.ws
+      // If double weapon house rule is active, subtract 1 from all to hit roll
+      if (minusToHitDW && attacker.weapons.length > 1) {
+        attack.to_hit_roll = attack.to_hit_roll - 1
       }
-
-      // If the parry was successful, determine if it was a mainhand or offhand hit that should be negated.
-      if (main_to_hit_roll.includes(max_hit_roll) && parry_successful) {
-        main_hits -= main_hits > 0 ? 1 : 0
-        if (debug) console.log("main parry successful", main_hits)
-      } else if (parry_successful){
-        offhand_hits -= offhand_hits > 0 ? 1 : 0
-        if (debug) console.log("offhand parry successful", offhand_hits)
+      
+      // Check if the to hit roll is higher than the target to hit value
+      attack.hit = attack.to_hit_roll >= toHit(attack.ws, defender.ws)
+      if (!attack.hit) {
+        attack.result = "Missed"
       }
     }
   }
-  return { main_hits, offhand_hits, main_to_hit_roll, offhand_to_hit_roll, parry_roll }
+
+  // Check if opponent has parry equipment
+  const parry_weapons = defender.weapons.filter((weapon) => weapon.tags.includes('parry'))
+  const parry_armour = defender.armour.filter((armour) => armour.tags.includes('parry'))
+  if (debug) console.log("parry equipment", parry_weapons, parry_armour)
+
+  // Combine all parry equipment and combine all to hit rolls to determine if parry is possible, and if re-roll parry is available
+  const combined_parry_equipment = [...parry_weapons, ...parry_armour]
+  const highest_hit_roll_attack = attack_group.sort((a, b) => b.to_hit_roll - a.to_hit_roll)[0]
+  const max_hit_roll = highest_hit_roll_attack.to_hit_roll
+
+  if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && max_hit_roll != 'auto hit' && highest_hit_roll_attack.hit) {
+    // If the defender has more than two weapons or armours with the parry tag, check for reroll parry tag and roll 2 dice
+    let parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? rollDice(2) : rollDice(1)
+    if (debug) console.log("parry procced", parry_roll)
+    // Get the highest of the parry rolls, in case of a re-roll.
+    parry_roll = Math.max(...parry_roll)
+
+    // If parry roll is higher than the highest hit roll, parry is successful
+    let parry_successful = parry_roll > max_hit_roll
+
+    // If house rule is active, add WS to parry roll
+    if (addWSToParry) {
+      if (debug) console.log("parry roll + ws, max hit roll + ws", parry_roll, defender.ws, max_hit_roll, attacker.ws)
+      parry_successful = parry_roll + defender.ws > max_hit_roll + attacker.ws
+    }
+    highest_hit_roll_attack.parry_roll = parry_roll
+
+    if (parry_successful) {
+      highest_hit_roll_attack.hit = false
+      highest_hit_roll_attack.result = "Parried"
+    }
+  }
+
+  return attack_group
 }
 
 const toWound = function (strength, toughness) {
@@ -383,174 +407,109 @@ const toWound = function (strength, toughness) {
   return target_value
 }
 
-export const toWoundPhase = function (attacker, defender, main_hits, offhand_hits, first_round, no_crits = false, house_rules = {}) {
-    // To Wound
-  // Initiate variables, these will be updated in the to wound and armour save phases
-  let main_wound_roll = []
-  let offhand_wound_roll = []
-  let main_wounds = 0
-  let offhand_wounds = 0
-  let main_armour_save_roll = []
-  let offhand_armour_save_roll = []
-  let main_weapon = attacker.weapons[0]
-  let offhand_weapon = attacker.weapons[1]
-
-  // Determine strength for each weapon
-  let main_strength = attacker.strength + main_weapon.strength_mod
-
-  // Check for first round bonuses for weapons, like morning stars, flails, etc.
-  // If not first round, strength is base strength
-  if (main_weapon.tags.includes('first round bonus') && !first_round) {
-    main_strength = attacker.strength
-  }
-
-  // Same thing as above, but for offhand weapon
-  let offhand_strength = attacker.strength
-  if (offhand_weapon && offhand_weapon.strength_mod) offhand_strength += offhand_weapon.strength_mod
-  if (offhand_weapon && offhand_weapon.tags.includes('first round bonus') && !first_round) {
-    offhand_strength = attacker.strength
-  }
-
-  // Roll to wound dice for main hand attacks,
-  main_wound_roll = rollDice(main_hits)
-  offhand_wound_roll = rollDice(offhand_hits)
-  if (debug) console.log("main wound roll, wounds", main_wound_roll, main_wounds)
-  if (debug) console.log("offhand wound roll, wounds", offhand_wound_roll, offhand_wounds)
-
-  // Crits
-  // Check for sixes to determine  if there was any crits.
-  let main_crit = main_wound_roll.some((roll) => roll == 6) && ableToCrit(main_strength, defender.toughness)
-  let offhand_crit = offhand_wound_roll.some((roll) => roll == 6) && ableToCrit(offhand_strength, defender.toughness)
-  const crit_roll = rollDice(1)
-  if (debug) console.log("main crit, offhand crit, crit roll", main_crit, offhand_crit, crit_roll)
-
-  if (main_weapon.tags.includes('holy') && (defender.tags.includes('undead') || defender.tags.includes('possessed'))) {
-    main_wound_roll = main_wound_roll.map((roll) => roll + 1)
-  }
-  if (offhand_weapon && offhand_weapon.tags.includes('holy') && (defender.tags.includes('undead') || defender.tags.includes('possessed'))) {
-    offhand_wound_roll = offhand_wound_roll.map((roll) => roll + 1)
-  }
-
-    // filter out those below the target value
-  main_wounds = main_wound_roll.filter((roll) => roll >= toWound(main_strength, defender.toughness)).length
-  offhand_wounds = offhand_wound_roll.filter((roll) => roll >= toWound(offhand_strength, defender.toughness)).length
-
-
-  // If no crits flag are set, set crits to false. No crits should only be used for testing.
-  if (no_crits) {
-    main_crit = false
-    offhand_crit = false
-  }
-
-  // Retrieve crit bonuses if crit procced
-  const [no_armour_save, extra_wounds, injury_bonus] = main_crit || offhand_crit ? getCrit(crit_roll) : [false, 0, 0]
-  if (main_crit) {
-    main_wounds += extra_wounds
-    if (debug) console.log("main crit procced", main_wounds)
-  } else if (offhand_crit) {
-    offhand_wounds += extra_wounds
-    if (debug) console.log("offhand crit procced", offhand_wounds)
-  }
-
-  // Armour saves
-  // Roll armour saves separately for main hand and offhand attacks
-  main_armour_save_roll = rollDice(main_wounds)
-  offhand_armour_save_roll = rollDice(offhand_wounds)
-  if (debug) console.log("main armour save roll", main_armour_save_roll, "offhand armour save roll", offhand_armour_save_roll)
-
-  if (no_armour_save) {
-    // No armour save from certain crits
-    main_armour_save_roll = ['crit no armour save']
-    offhand_armour_save_roll = ['crit no armour save']
-  } else {
-
-    // Apply AP from weapons
-    const main_ap = main_weapon.ap ? main_weapon.ap : 0
-    const offhand_ap = offhand_weapon && offhand_weapon.ap ? offhand_weapon.ap : 0
-
-    // Filter out unsaved wounds if roll is below the target armour save
-    main_wounds = main_armour_save_roll.filter((roll) => roll < modifyArmourSave(main_strength, defender.armour_save - main_ap, house_rules)).length
-    offhand_wounds = offhand_armour_save_roll.filter((roll) => roll < modifyArmourSave(offhand_strength, defender.armour_save - offhand_ap, house_rules)).length
-  }
-
-  return { main_wound_roll, offhand_wound_roll, main_wounds, offhand_wounds, main_armour_save_roll, offhand_armour_save_roll, injury_bonus, no_armour_save, extra_wounds }
-}
-
-export const injuryPhase = function (attacker, defender, main_wounds, offhand_wounds, injury_bonus) {
-  // Initiate variables, these will be updated in the to wound and armour save phases
-  let main_injury_roll = []
-  let offhand_injury_roll = []
-  let main_weapon = attacker.weapons[0]
-  let offhand_weapon = attacker.weapons[1]
-
-  // If the defender is stunned, auto OOA it.
-  if (defender.status == "stunned") {
-    main_injury_roll = ['coup de grace']
-    defender.status = "out of action"
-    if (debug) console.log("defender stunnes - taken OOA")
-  } else {
-    // Injuries
-    if (debug) console.log("defender status", defender.status, "main wounds", main_wounds, "offhand wounds", offhand_wounds)
-
-    // Any unsaved wounds Auto-OOA the defender if it is knocked down
-    if (defender.status == "knocked down" && main_wounds + offhand_wounds > 0) {
-      defender.status = "out of action"
-      if (debug) console.log("defender knocked down - taken OOA")
-    } else if (main_wounds + offhand_wounds >= defender.wounds) {
-      // If the number of wounds inflicted is higher than the defenders wounds left, injuries are inflicted.
-      let main_injuries = main_wounds
-      let offhand_injuries = offhand_wounds
-
-      if (defender.wounds >= 3) {
-        // First remove offhand injuries, then main injuries
-        defender.wounds -= offhand_injuries
-        offhand_injuries = 0
-        // We now remove the remaining wounds to determine the number of injuries, and add +1 for bringing the defender to 0 wounds (from 1 -> 0)
-        main_injuries = main_injuries - defender.wounds + 1
-      } else if (defender.wounds == 2) {
-        switch (offhand_injuries) {
-          case 2:
-            // If offhand critted and caused 2 wounds, and the defender has 2 wounds, then 1 injury is caused by the offhand.
-            offhand_injuries = 1
-            break
-          case 1:
-            // If the offhand landed 1 wound and the main hand 1+ wounds, then the offhand injury is removed and all the wounds are considered main hand injuries.
-            offhand_injuries = 0
-            break
-          case 0:
-            // No offhand injuries, all wounds are main hand injuries, remove 1 wound to get a correct number of injury rolls.
-            main_injuries = main_injuries - 1
-            break
-        }
-      }
-
-      // Roll dice for main hand and offhand injuries
-      main_injury_roll = rollDice(main_injuries)
-      offhand_injury_roll = rollDice(offhand_injuries)
-      if (debug) console.log("main injury roll", main_injury_roll, "offhand injury roll", offhand_injury_roll)
-
-      // Apply concussion rule to injury rolls if the weapon has the concussion tag
-      if (main_weapon.tags.includes('concussion')) {main_injury_roll = main_injury_roll.map((roll) => roll == 2 ? 3 : roll)}
-      if (offhand_weapon && offhand_weapon.tags.includes('concussion')) {offhand_injury_roll = offhand_injury_roll.map((roll) => roll == 2 ? 3 : roll)}
-
-      // Determine the highest injury roll and apply the injury
-      const highest_injury_roll = Math.max(...[...main_injury_roll, ...offhand_injury_roll]) + injury_bonus
-      const highest_injury = injury(highest_injury_roll)
-      defender.status = highest_injury
-      if (debug) console.log("highest injury roll", highest_injury_roll, "injury", highest_injury)
-
-      if (defender.armour.some((armour) => armour.tags.includes('avoid stun')) && rollDice(1)[0] >= 4) {
-         defender.status = "knocked down"
-      }
+export const toWoundPhase = function (attacker, defender, attack_group, first_round, no_crits = false, house_rules = {}) {
+  for (const attack of attack_group.filter((attack) => attack.hit)) {
+    if (defender.old_status == "stunned") {
+      attack.to_wound_roll = 'coup de grace'
+      attack.wounded = true
+      attack.unsaved_wounds = 1
+      attack.caused_wounds = 1
+      attack.result = "Defender is stunned, auto OOA"
+      continue
     }
 
-    // Remove wounds from defender
-    defender.wounds -= (main_wounds + offhand_wounds)
-    // If the defender has less than 1 wounds, set it to 1 to avoid negative wounds.
-    // This also makes the logic easier since 0 wounds and 1 wound is almost the same.
-    if (defender.wounds < 1) defender.wounds = 1
+    const weapon = attack.weapon
+
+    // Determine strength
+    let strength = attack.strength
+    strength += weapon.strength_mod ? weapon.strength_mod : 0 
+
+    // Check for first round bonuses for weapons, like morning stars, flails, etc.
+    // If not first round, strength is base strength
+    if (weapon?.tags.includes('first round bonus') && !first_round) {
+      strength = attack.strength
+    }
+
+    attack.to_wound_roll = rollDice(1)[0]
+    attack.crit = attack.to_wound_roll == 6 && ableToCrit(strength, defender.toughness) && !attacker.crit_this_turn && !no_crits
+
+    
+    // Sigmarite hammers and blessed weapons
+    if (weapon.tags.includes('holy') && (defender.tags.includes('undead') || defender.tags.includes('possessed'))) {
+      attack.to_wound_roll = attack.to_wound_roll + 1
+    }
+    
+    // Check if the to wound roll is higher than the target to wound value
+    attack.wounded = attack.to_wound_roll >= toWound(strength, defender.toughness)
+    if (attack.wounded) {
+      attack.wounds_caused = 1
+    } else {
+      attack.wounds_caused = 0
+      attack.result = "Failed to wound"
+    }
+
+    if (attack.crit) {
+      attacker.crit_this_turn = true
+      const crit_roll = rollDice(1)[0]
+      const [no_armour_save, extra_wounds, injury_bonus] = getCrit(crit_roll)
+      attack.no_armour_save = no_armour_save
+      attack.wounds_caused = attack.wounds_caused + extra_wounds
+      attack.injury_bonus = injury_bonus
+    }
+    
+    attack.unsaved_wounds = attack.wounds_caused
+    if (defender.armour_save < 7 && !attack.no_armour_save) {
+      // Roll armour save
+      attack.armour_save_roll = rollDice(1)[0]
+      // Check if the armour save roll is higher than the target armour save value
+      const save_successful = attack.armour_save_roll >= modifyArmourSave(strength, weapon.ap, defender.armour_save, house_rules)
+      if (save_successful) {
+        attack.unsaved_wounds = 0
+        attack.result = "Blocked by armour"
+      }
+    }
   }
-  return { main_injury_roll, offhand_injury_roll }
+
+  return attack_group
+}
+
+export const injuryPhase = function (attacker, defender, attack_group) {
+  for (const attack of attack_group.filter((attack) => attack.unsaved_wounds > 0)) {
+    if (defender.status === "out of action") continue
+
+    if (defender.old_status == "stunned") {
+      attack.injury_roll = 'coup de grace'
+      attack.injury = "out of action"
+      attack.result = "Defender is stunned, coup de grace"
+      defender.status = "out of action"
+      if (debug) console.log("defender stunnes - taken OOA")
+    } else { 
+      if (defender.old_status == "knocked down" && attack.unsaved_wounds > 0) {
+        attack.injury_roll = 'knocked, squished'
+        attack.injury = "out of action"
+        attack.result = "Defender is knocked down, squished"
+        defender.status = "out of action"
+        if (debug) console.log("defender knocked down - taken OOA")
+      } else {
+        defender.wounds = defender.wounds - attack.unsaved_wounds
+
+        if (defender.wounds < 1) {
+          const injury_rolls = rollDice(1 - defender.wounds)
+          for (const injury_roll of injury_rolls) {
+            const injury = getInjury(attack.injury_bonus ? injury_roll + attack.injury_bonus : injury_roll, attack, defender)
+            if ((defender.status == "knocked down" || defender.status == "standing") || injury == "out of action") {
+              defender.status = injury
+              attack.injury = injury
+              attack.injury_roll = injury_roll
+            }
+          }
+          defender.wounds = 1 // 1 is the lowest, every wound below it becomes a injury roll
+        }
+      }
+    }
+  }
+
+  return attack_group
 }
 
 const ableToCrit = function (strength, toughness) {
@@ -570,21 +529,26 @@ const getCrit = function (dice_roll) {
   return [false, 0, 0]
 }
 
-const modifyArmourSave = function (attacker_strength, armour_save, house_rules) {
+const modifyArmourSave = function (attacker_strength, weapon_ap = 0, armour_save, house_rules) {
   const {noStrengthBasedAP, ap5} = house_rules
   if (noStrengthBasedAP) return armour_save
 
   const AP_strength = ap5 ? 4 : 3
   const ap = attacker_strength > AP_strength ? attacker_strength - AP_strength : 0
-  const armour_save_target = armour_save + ap
+  const armour_save_target = armour_save + ap - weapon_ap
   return armour_save_target
 }
 
-const injury = function (injury_roll) {
+const getInjury = function (injury_roll, attack, defender) {
+  injury_roll = attack.weapon?.tags.includes('concussion') && injury_roll == 2 ? 3 : injury_roll
+
   if (injury_roll == 1 || injury_roll == 2) {
       return "knocked down"
   }
   if (injury_roll == 3 || injury_roll == 4) {
+      if (defender.armour.some((armour) => armour.tags.includes('avoid stun')) && rollDice(1)[0] >= 4) {
+        return "knocked down"
+      }
       return "stunned"
   }
   if (injury_roll >= 5) {
@@ -595,67 +559,14 @@ const injury = function (injury_roll) {
 }
 
 export const doRecovery = function (warrior) {
+  warrior.stood_up = false
   // Recovery phase, stunned goes to knocked down, knocked down goes to standing
   if (warrior.status == "knocked down") {
       warrior.status = "standing"
       warrior.stood_up = true
-  }
+    }
   if (warrior.status == "stunned") {
-      warrior.status = "knocked down"
+    warrior.status = "knocked down"
   }
-}
-
-export const whoStrikesFirst = function (warrior_1, warrior_2, first_turn, house_rules) {
-  const {ogSpears} = house_rules
-  const warrior_1_tags = warrior_1.weapons.map((weapon) => weapon.tags).flat()
-  const warrior_2_tags = warrior_2.weapons.map((weapon) => weapon.tags).flat()
-
-  // If any warrior just stood up, the other warrior strikes first
-  if (warrior_1.stood_up || warrior_2.stood_up) {
-    if (warrior_2.stood_up) {
-      warrior_2.stood_up = false
-      return [warrior_1, warrior_2]
-    } else {
-      warrior_1.stood_up = false
-      return [warrior_2, warrior_1]
-    }
-  }
-
-  // If any warrior carries a weapon with the "strike last" tag, that warrior strikes last
-  if (warrior_1_tags.includes('strike last') && !warrior_2_tags.includes('strike last')) {
-    return [warrior_2, warrior_1]
-  } else if (warrior_2_tags.includes('strike last') && !warrior_1_tags.includes('strike last')) {
-    return [warrior_1, warrior_2]
-  }
-
-  if (first_turn) {
-    // If ogSpears house rule is active, the warrior with the spear strikes first no matter the initiative/charger
-    if (ogSpears) {
-      if (warrior_1.weapons.some((weapon) => weapon.name == 'spear')) {
-        return [warrior_1, warrior_2]
-      } else if (warrior_2.weapons.some((weapon) => weapon.name == 'spear')) {
-        return [warrior_2, warrior_1]
-      }
-    } else {
-      // If it's the first turn the charger strikes first, unless the other warrior has the "strike first" tag, then it defaults to initiative
-      if (warrior_1.charger && !warrior_2_tags.includes('strike first')) {
-        return [warrior_1, warrior_2]
-      } else  if (warrior_2.charger && !warrior_1_tags.includes('strike first')) {
-        return [warrior_2, warrior_1]
-      }
-    }
-  }
-
-  // Default to initiative
-  if (warrior_1.initiative > warrior_2.initiative) {
-    return [warrior_1, warrior_2]
-  } else if (warrior_2.initiative > warrior_1.initiative) {
-    return [warrior_2, warrior_1]
-  } else {
-    if (rollDice(1)[0] >= 4) {
-      return [warrior_1, warrior_2]
-    } else {
-      return [warrior_2, warrior_1]
-    }
-  }
+  warrior.old_status = warrior.status
 }

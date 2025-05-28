@@ -36,7 +36,7 @@ const WinRateBar = ({
             {/* Round Win Rate Bars */}
             <div style={{ marginTop: '10px' }}>
                 {warrior1RoundsPercentage.map((warrior1WinRate, index) => {
-                    const warrior2WinRate = warrior2RoundsPercentage[index];
+                    const warrior2WinRate = warrior2RoundsPercentage[index] || 0;
                     const leftWidth = warrior1WinRate; // Win rate for warrior_1
                     const rightWidth = warrior2WinRate; // Win rate for warrior_2
                     const roundNumber = index == 9 ? '10+' : index + 1; // Round number (1-based index)
