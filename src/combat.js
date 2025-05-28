@@ -110,7 +110,7 @@ export const setUpAttacks = function (attacker, defender) {
 
 const setInitiativeOfAttacks = function (attack, warrior) {
   let initiative = attack.initiative
-  initiative += attack.weapon.initiative_mod ? attack.weapon.initiative_mod : 0
+  initiative += attack.weapon.init_mod ? attack.weapon.init_mod : 0
 
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
   if (attack.weapon.tags.includes('strike first') || warrior.charged) {
@@ -202,6 +202,12 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
       // The charger recovers on round 1, 3, 5 etc
       doRecovery(warrior_1)
     }
+    warrior_1.old_status = warrior_1.status
+    warrior_1.crit_this_turn = false
+    warrior_2.old_status = warrior_2.status
+    warrior_2.crit_this_turn = false
+
+
     warrior_1 = setUpAttacks(warrior_1, warrior_2)
     warrior_2 = setUpAttacks(warrior_2, warrior_1)
     
@@ -226,7 +232,7 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
     }
     first_round = false
 
-    fight_log.push({'round': round_number, w1s: warrior_1.status, w2s: warrior_2.status})
+    fight_log.push({'round': round_number, w1s: warrior_1.status, w2s: warrior_2.status, grouped_attacks: JSON.parse(JSON.stringify(grouped_attacks))})
   }
   if (debug) console.log(fight_log)
   const winner = warrior_1.status == "out of action" ? warrior_2 : warrior_1
@@ -326,6 +332,7 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
     if (defender.old_status == "knocked down" || defender.old_status == "stunned") {
       attack.to_hit_roll = ['auto hit']
       attack.hit = true
+      if (debug) console.log("defender " + defender.old_status + ", auto hit", attack)
     } else {
       attack.to_hit_roll = rollDice(1)[0]
       attack.to_hit_roll += weapon.hit_mod ? weapon.hit_mod : 0 
@@ -415,6 +422,7 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
       attack.unsaved_wounds = 1
       attack.caused_wounds = 1
       attack.result = "Defender is stunned, auto OOA"
+      if (debug) console.log("Defender is stunned, auto OOA", attack)
       continue
     }
 
@@ -482,7 +490,7 @@ export const injuryPhase = function (attacker, defender, attack_group) {
       attack.injury = "out of action"
       attack.result = "Defender is stunned, coup de grace"
       defender.status = "out of action"
-      if (debug) console.log("defender stunnes - taken OOA")
+      if (debug) console.log("defender stunned - taken OOA")
     } else { 
       if (defender.old_status == "knocked down" && attack.unsaved_wounds > 0) {
         attack.injury_roll = 'knocked, squished'
@@ -568,5 +576,4 @@ export const doRecovery = function (warrior) {
   if (warrior.status == "stunned") {
     warrior.status = "knocked down"
   }
-  warrior.old_status = warrior.status
 }
