@@ -22,6 +22,7 @@ function App() {
     noStrengthBasedAP: false
   })
   const [nrOfSimulations, setNrOfSimulations] = useState(100000)
+  const [spinnerVisible, setSpinnerVisible] = useState(false) // <-- Spinner state
 
   const handleRuleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -44,13 +45,22 @@ function App() {
   }
 
   const runSimulation = (nrOfSimulations) => {
-    const winRates = runSimulateCombat(warrior1, warrior2, houseRules, nrOfSimulations);
-    setWinRates(winRates);
+    setSpinnerVisible(true); // Show spinner before starting the simulation
+    setTimeout(() => {
+      const winRates = runSimulateCombat(warrior1, warrior2, houseRules, nrOfSimulations);
+      setWinRates(winRates);
+      setSpinnerVisible(false); // Hide spinner after the simulation is done
+    }, 100); // Allow React to update the spinner state before running the simulation    
   }
 
   return (
     <>
       <div className="card">
+        {spinnerVisible && (
+          <div className="spinner" style={{ textAlign: 'center', margin: '1em' }}>
+            <span role="status">🌀 Running calculations, please wait...</span>
+          </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div>

@@ -53,7 +53,7 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
 // To handle different initiative attacks, set up the attack slots for each warrior
 // then sort the attacks in initiative order, instead of sorting the warriors.
 // Make sure to save status of the target at the start of round, so no auto-OOA's occur due to timing differences.
-export const setUpAttacks = function (attacker, defender) {
+export const setUpAttacks = function (attacker, defender, round_number) {
   attacker.attack_slots = []
   for (let i = 0; i < attacker.attacks; i++) {
     attacker.attack_slots.push({
@@ -78,6 +78,7 @@ export const setUpAttacks = function (attacker, defender) {
       armour_save_roll: 0,
       no_armour_save: false,
       parry_roll: 0,
+      parryable: true
     })
   }
   if (attacker.weapons[1]) {
@@ -103,7 +104,40 @@ export const setUpAttacks = function (attacker, defender) {
       armour_save_roll: 0,
       no_armour_save: false,
       parry_roll: 0,
+      parryable: true
     })
+  }
+
+  if (round_number == 1) {
+    for (const weapon of attacker.weapons) {
+      if (weapon.tags.includes('whipcrack')) {
+        attacker.attack_slots.push({
+          weapon: weapon,
+          ws: attacker.ws,
+          strength: attacker.strength, 
+          initiative: 99, 
+          source: attacker.name, 
+          target: defender.name, 
+          offHand: false,
+          injury_bonus: 0,
+          injury_roll: 0,
+          injury: '',
+          crit: false,
+          hit: false,
+          wounded: false,
+          unsaved_wounds: 0,
+          wounds_caused: 0,
+          result: '',
+          to_hit_roll: 0,
+          to_wound_roll: 0,
+          armour_save_roll: 0,
+          no_armour_save: false,
+          parry_roll: 0,
+          parryable: false
+        })
+        break
+      }
+    }
   }
   return attacker
 }
@@ -114,7 +148,7 @@ const setInitiativeOfAttacks = function (attack, warrior) {
 
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
   if (attack.weapon.tags.includes('strike first') || warrior.charged) {
-    initiative = 99
+    initiative = 99 + warrior.initiative * 0.1
   }
 
   // If the weapon of an attack has a tag that indicates it should strike last, set the initiative to -1
@@ -129,7 +163,7 @@ const setInitiativeOfAttacks = function (attack, warrior) {
   return initiative
 }
 
-const orderAttacksByInitiative = function (attacker, defender) {
+export const orderAttacksByInitiative = function (attacker, defender) {
   const tie_rolls = {}
 
   //consolidate the attack slots into a single array
@@ -195,21 +229,12 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
   while (!fight_done) {
     round_number += 1
     // Recovery phase
-    if (round_number % 2 == 0) {
-      // The charge-receiver recovers on round 2, 4, 6 etc
-      doRecovery(warrior_2)
-    } else  {
-      // The charger recovers on round 1, 3, 5 etc
-      doRecovery(warrior_1)
-    }
-    warrior_1.old_status = warrior_1.status
-    warrior_1.crit_this_turn = false
-    warrior_2.old_status = warrior_2.status
-    warrior_2.crit_this_turn = false
+    // The charger recovvers on round 1, 3, 5 etc and the charge-receiver recovers on round 2, 4, 6 etc
+    doRecovery(warrior_1, round_number % 2 == 1)
+    doRecovery(warrior_2, round_number % 2 == 0)
 
-
-    warrior_1 = setUpAttacks(warrior_1, warrior_2)
-    warrior_2 = setUpAttacks(warrior_2, warrior_1)
+    warrior_1 = setUpAttacks(warrior_1, warrior_2, round_number)
+    warrior_2 = setUpAttacks(warrior_2, warrior_1, round_number)
     
     const grouped_attacks = orderAttacksByInitiative(warrior_1, warrior_2)
     
@@ -364,7 +389,7 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
   const highest_hit_roll_attack = attack_group.sort((a, b) => b.to_hit_roll - a.to_hit_roll)[0]
   const max_hit_roll = highest_hit_roll_attack.to_hit_roll
 
-  if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && max_hit_roll != 'auto hit' && highest_hit_roll_attack.hit) {
+  if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && max_hit_roll != 'auto hit' && highest_hit_roll_attack.hit && highest_hit_roll_attack.parryable) {
     // If the defender has more than two weapons or armours with the parry tag, check for reroll parry tag and roll 2 dice
     let parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? rollDice(2) : rollDice(1)
     if (debug) console.log("parry procced", parry_roll)
@@ -566,14 +591,16 @@ const getInjury = function (injury_roll, attack, defender) {
   return "bugged"
 }
 
-export const doRecovery = function (warrior) {
+export const doRecovery = function (warrior, your_turn) {
   warrior.stood_up = false
   // Recovery phase, stunned goes to knocked down, knocked down goes to standing
-  if (warrior.status == "knocked down") {
+  if (warrior.status == "knocked down" && your_turn) {
       warrior.status = "standing"
       warrior.stood_up = true
     }
-  if (warrior.status == "stunned") {
+  if (warrior.status == "stunned" && your_turn) {
     warrior.status = "knocked down"
   }
+  warrior.old_status = warrior.status
+  warrior.crit_this_turn = false
 }

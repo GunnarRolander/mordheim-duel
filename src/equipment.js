@@ -74,6 +74,12 @@ export const weapons = {
       type: "bashing",
       tags: ['concussion', 'holy']
   },
+  'steel whip': {
+      name: 'Steel whip',
+      strength_mod: 0,
+      type: "bashing",
+      tags: ['whipcrack']
+  },
 }
 
 export const armour = {
