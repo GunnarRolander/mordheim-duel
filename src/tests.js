@@ -52,8 +52,7 @@ export const runTests = () => {
   let last_weapon = {}
   let first_warrior = {}
   let last_warrior = {};
-
-  /*
+  
   // to Hit tests
   result = testToHitPhase(warrior_1, warrior_2, attacks)
   main_hit_ratio = result.main_hit_ratio
@@ -120,6 +119,8 @@ export const runTests = () => {
   console.assert(main_wound_ratio == 0, "S3 vs T7, average number of wounds is not 0")
   
   // check crits
+  resetWarrior(warrior_1)
+  resetWarrior(warrior_2)
   warrior_2.toughness = 1
   result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, false)
   crit_ratio = result.crit_ratio
@@ -445,8 +446,7 @@ export const runTests = () => {
   warrior_1.initiative = 2
   result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
   console.log("I2 Spear gets charged by I3 warrior, should strike first 0% of time", result.first_weapon['spear'] || 0)
-  console.assert((result.first_weapon['spear'] ||) 0 == 0, "spear does not strike first 0% of time")
-  */
+  console.assert((result.first_weapon['spear'] || 0) == 0, "spear does not strike first 0% of time")
   
   resetWarrior(warrior_1)
   resetWarrior(warrior_2)
@@ -465,6 +465,19 @@ export const runTests = () => {
   result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
   console.log("I3 warrior who just stood up fights a I3 warrior with great weapon, should strike last 100% of time", result.first_warrior['warrior_1'] || 0)
   console.assert((result.first_warrior['warrior_1'] || 0) == 0, "warrior_1 does not strike last 100% of time")
+
+  // Steel whip tests
+  resetWarrior(warrior_1)
+  resetWarrior(warrior_2)
+  warrior_1.weapons = [weapons['steel whip']]
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  console.log("Steel whip should have two attacks first turn of combat", attacks.length)
+  console.assert(attacks.length == 2, "Steel whip does not have two attacks first turn of combat")
+  console.log("Steel whip should have one attack with strike first in the first round of combat", attacks.filter((attack) => attack.initiative > 99).length)
+  console.assert(attacks.filter((attack) => attack.initiative > 99).length == 1, "Steel whip does not have one attack with strike first in the first round of combat")
+  attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
+  console.log("Steel whip should have one attack second turn of combat", attacks.length)
+  console.assert(attacks.length == 1, "Steel whip does not have one attack second turn of combat")
 }
 
 const testToHitPhase = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {

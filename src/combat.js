@@ -115,7 +115,7 @@ export const setUpAttacks = function (attacker, defender, round_number) {
           weapon: weapon,
           ws: attacker.ws,
           strength: attacker.strength, 
-          initiative: 99, 
+          initiative: 99 + attacker.initiative * 0.1, // Whipcrack always strikes first
           source: attacker.name, 
           target: defender.name, 
           offHand: false,
