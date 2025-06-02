@@ -1,4 +1,4 @@
-import { weapons, armour } from './equipment.js'
+import { ranged_weapons, weapons, armour } from './equipment.js'
 const debug = false
 
 export const runSimulateCombat = function (warrior1, warrior2, house_rules={
@@ -55,12 +55,17 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
 // Make sure to save status of the target at the start of round, so no auto-OOA's occur due to timing differences.
 export const setUpAttacks = function (attacker, defender, round_number) {
   attacker.attack_slots = []
-  for (let i = 0; i < attacker.attacks; i++) {
+  const mainhand_pistol = attacker.weapons_mainhand.filter((weapon) => weapon.tags.includes('pistol'))[0]
+  const offhand_pistol = attacker.weapons_offhand.filter((weapon) => weapon.tags.includes('pistol'))[0]
+  const weapons_equipped_this_round = []
+
+  if (round_number == 1 && mainhand_pistol) {
     attacker.attack_slots.push({
-      weapon: attacker.weapons[0],
-      ws: attacker.ws,
-      strength: attacker.strength, 
-      initiative: attacker.initiative, 
+      weapon: mainhand_pistol, 
+      ws: attacker.ws, 
+      bs: attacker.bs, 
+      strength: mainhand_pistol.strength, 
+      initiative: attacker.initiative,
       source: attacker.name, 
       target: defender.name, 
       offHand: false,
@@ -78,13 +83,75 @@ export const setUpAttacks = function (attacker, defender, round_number) {
       armour_save_roll: 0,
       no_armour_save: false,
       parry_roll: 0,
-      parryable: true
+      parryable: true,
+      ap: mainhand_pistol.ap || 0
     })
+    weapons_equipped_this_round.push(mainhand_pistol)
+  } else {
+    for (let i = 0; i < attacker.attacks; i++) {
+      attacker.attack_slots.push({
+        weapon: attacker.weapons_mainhand[0],
+        ws: attacker.ws,
+        bs: attacker.bs, 
+        strength: attacker.strength, 
+        initiative: attacker.initiative, 
+        source: attacker.name, 
+        target: defender.name, 
+        offHand: false,
+        injury_bonus: 0,
+        injury_roll: 0,
+        injury: '',
+        crit: false,
+        hit: false,
+        wounded: false,
+        unsaved_wounds: 0,
+        wounds_caused: 0,
+        result: '',
+        to_hit_roll: 0,
+        to_wound_roll: 0,
+        armour_save_roll: 0,
+        no_armour_save: false,
+        parry_roll: 0,
+        parryable: true,
+        ap: attacker.weapons_mainhand[0].ap || 0
+      })
+    }
+    weapons_equipped_this_round.push(attacker.weapons_mainhand[0])
   }
-  if (attacker.weapons[1]) {
+
+  if (round_number == 1 && offhand_pistol) {
     attacker.attack_slots.push({
-      weapon: attacker.weapons[1], 
-      ws: attacker.ws, 
+      weapon: offhand_pistol, 
+      ws: attacker.ws,
+      bs: attacker.bs, 
+      strength: offhand_pistol.strength, 
+      initiative: attacker.initiative,
+      source: attacker.name, 
+      target: defender.name, 
+      offHand: false,
+      injury_bonus: 0,
+      injury_roll: 0,
+      injury: '',
+      crit: false,
+      hit: false,
+      wounded: false,
+      unsaved_wounds: 0,
+      wounds_caused: 0,
+      result: '',
+      to_hit_roll: 0,
+      to_wound_roll: 0,
+      armour_save_roll: 0,
+      no_armour_save: false,
+      parry_roll: 0,
+      parryable: true,
+      ap: offhand_pistol.ap || 0
+    })
+    weapons_equipped_this_round.push(offhand_pistol)
+  } else if (attacker.weapons_offhand[0] && !attacker.weapons_offhand[0].tags.includes('pistol')) {
+    attacker.attack_slots.push({
+      weapon: attacker.weapons_offhand[0], 
+      ws: attacker.ws,
+      bs: attacker.bs, 
       strength: attacker.strength, 
       initiative: attacker.initiative, 
       source: attacker.name, 
@@ -104,16 +171,19 @@ export const setUpAttacks = function (attacker, defender, round_number) {
       armour_save_roll: 0,
       no_armour_save: false,
       parry_roll: 0,
-      parryable: true
+      parryable: true,
+      ap: attacker.weapons_offhand[0].ap || 0
     })
+    weapons_equipped_this_round.push(attacker.weapons_offhand[0])
   }
 
   if (round_number == 1) {
-    for (const weapon of attacker.weapons) {
+    for (const weapon of weapons_equipped_this_round) {
       if (weapon.tags.includes('whipcrack')) {
         attacker.attack_slots.push({
           weapon: weapon,
           ws: attacker.ws,
+          bs: attacker.bs, 
           strength: attacker.strength, 
           initiative: 99 + attacker.initiative * 0.1, // Whipcrack always strikes first
           source: attacker.name, 
@@ -133,12 +203,15 @@ export const setUpAttacks = function (attacker, defender, round_number) {
           armour_save_roll: 0,
           no_armour_save: false,
           parry_roll: 0,
-          parryable: false
+          parryable: false,
+          ap: weapon.ap || 0
         })
         break
       }
     }
   }
+  attacker.weapons = weapons_equipped_this_round
+
   return attacker
 }
 
@@ -285,7 +358,10 @@ const fightCombatRound = function (attacker, defender, attack_group, first_round
 const createWarriorFromForm = function (name, formData) {
 
   const equipped_weapons = [weapons[formData.mainHand]]
-  if (formData.offHand != 'emptyHand') equipped_weapons.push(weapons[formData.offHand])
+  if (formData.mainHandPistol != 'emptyHand') equipped_weapons.push(ranged_weapons[formData.mainHandPistol])
+  const equipped_weapons_offhand = []
+  if (formData.offHand != 'emptyHand') equipped_weapons_offhand.push(weapons[formData.offHand])
+  if (formData.offHandPistol != 'emptyHand') equipped_weapons_offhand.push(ranged_weapons[formData.offHandPistol])
 
   const equipped_armour = formData.selectedArmour.map((type) => armour[type])
 
@@ -298,7 +374,9 @@ const createWarriorFromForm = function (name, formData) {
     wounds: parseInt(formData.W),
     initiative: parseInt(formData.I),
     status: "standing",
-    weapons: equipped_weapons,
+    weapons_mainhand: equipped_weapons,
+    weapons_offhand: equipped_weapons_offhand,
+    weapons: equipped_weapons.concat(equipped_weapons_offhand),
     armour: equipped_armour,
     armour_save: formData.armourSave,
     charger: formData.charger,

@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
-import { weapons, armour } from './equipment.js';
+import { weapons, armour, ranged_weapons } from './equipment.js';
 import ArmourComponent from './ArmourComponent.jsx';
 
 const WarriorComponent = ({ handleWarriorChange }) => {
@@ -14,7 +14,9 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         A: 1,
         LD: 7,
         mainHand: 'handweapon',
+        mainHandPistol: 'emptyHand',
         offHand: 'emptyHand',
+        offHandPistol: 'emptyHand',
         selectedArmour: [],
         charger: false,
         tags: [],
@@ -82,7 +84,9 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
             <div style={{ textAlign: 'left'}}>
                 <label>Main hand </label><br/>
+                <label>Main hand (pistol) </label><br/>
                 <label>Offhand </label><br/>
+                <label>Offhand (pistol) </label><br/>
                 <label>Charger</label><br/>
                 <label>Undead</label><br/>
                 <label>Possessed</label><br/>
@@ -93,9 +97,21 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                         <option key={weapon} value={weapon}>{weapon}</option>
                     ))}
                 </select><br/>
+                <select style={{ float: 'right' }} name="mainHandPistol" value={formData.mainHandPistol} onChange={handleChange}>
+                    <option key="emptyOffhand" value="emptyHand">No weapon</option>
+                    {Object.keys(ranged_weapons).map((weapon) => (
+                        <option key={weapon} value={weapon}>{weapon}</option>
+                    ))}
+                </select><br/>
                 <select style={{ float: 'right' }} name="offHand" value={formData.offHand} onChange={handleChange}>
                     <option key="emptyOffhand" value="emptyHand">No weapon</option>
                     {Object.keys(weapons).map((weapon) => (
+                        <option key={weapon} value={weapon}>{weapon}</option>
+                    ))}
+                </select><br/>
+                <select style={{ float: 'right' }} name="offHandPistol" value={formData.offHandPistol} onChange={handleChange}>
+                    <option key="emptyOffhand" value="emptyHand">No weapon</option>
+                    {Object.keys(ranged_weapons).map((weapon) => (
                         <option key={weapon} value={weapon}>{weapon}</option>
                     ))}
                 </select><br/>

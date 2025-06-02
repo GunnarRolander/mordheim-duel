@@ -91,6 +91,31 @@ export const weapons = {
       strength_mod: 0,
       type: "slashing",
       tags: ['parry', 'poisoned']
+  }
+}
+
+export const ranged_weapons = {
+  'pistol': {
+      name: 'pistol',
+      strength: 4,
+      type: "ranged",
+      tags: ['pistol'],
+      ap: -1
+  },
+  'duelling pistol': {
+      name: 'duelling pistol',
+      strength: 4,
+      type: "ranged",
+      tags: ['pistol'],
+      ap: -1,
+      hit_mod: 1
+  },
+  'warplock pistol': {
+      name: 'warplock pistol',
+      strength: 5,
+      type: "ranged",
+      tags: ['pistol'],
+      ap: -1
   },
 }
 
