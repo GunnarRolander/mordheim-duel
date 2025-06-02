@@ -53,6 +53,14 @@ function App() {
     }, 100); // Allow React to update the spinner state before running the simulation    
   }
 
+  const runUnitTests = () => {
+    setSpinnerVisible(true); // Show spinner before starting the simulation
+    setTimeout(() => {
+      runTests();
+      setSpinnerVisible(false); // Hide spinner after the simulation is done
+    }, 100); // Allow React to update the spinner state before running the simulation    
+  }
+
   return (
     <>
       <div className="card">
@@ -119,9 +127,16 @@ function App() {
         </button>
         <br/>
         <br/>
-        <button onClick={() => runTests()}>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <br/>
+        <button onClick={() => runUnitTests()}>
           run unit tests
         </button>
+        <p>Open the console to see the test results (F12 or ctrl + shift + i)</p>
       </div>
     </>
   )

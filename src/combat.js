@@ -361,6 +361,10 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
     } else {
       attack.to_hit_roll = rollDice(1)[0]
       attack.to_hit_roll += weapon.hit_mod ? weapon.hit_mod : 0 
+
+      if (attack.to_hit_roll == 6 && weapon.tags.includes('poisoned')) {
+        attack.poison_proc = true
+      }
       
       // Apply offhand house rules, if active
       if (offhand && minusToHitOffhand > 0) {
@@ -473,7 +477,7 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
     }
     
     // Check if the to wound roll is higher than the target to wound value
-    attack.wounded = attack.to_wound_roll >= toWound(strength, defender.toughness)
+    attack.wounded = attack.to_wound_roll >= toWound(strength, defender.toughness) || attack.poison_proc
     if (attack.wounded) {
       attack.wounds_caused = 1
     } else {

@@ -478,6 +478,15 @@ export const runTests = () => {
   attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
   console.log("Steel whip should have one attack second turn of combat", attacks.length)
   console.assert(attacks.length == 1, "Steel whip does not have one attack second turn of combat")
+
+  // Weeping blade tests
+  resetWarrior(warrior_1)
+  resetWarrior(warrior_2)
+  warrior_1.weapons = [weapons['weeping blades']]
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  result = testPoisonedWeapons(warrior_1, warrior_2, attacks)
+  console.log("Weeping blade should have 1/6 of attacks trigger poison", result.poisoned_ratio)
+  console.assert(result.poisoned_ratio > 0.16 && result.poisoned_ratio < 0.173, "Weeping blade does not have 1/6 of attacks trigger poison")
 }
 
 const testToHitPhase = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {
@@ -603,4 +612,16 @@ const resetWarrior = (warrior) => {
     stood_up: false
   }
   return warrior
+}
+
+const testPoisonedWeapons = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {
+  let total_poisoned_hits = 0;
+  for (let i = 0; i < number_of_simulations; i++) {
+    const warrior1 = JSON.parse(JSON.stringify(warrior_1_base))
+    const warrior2 = JSON.parse(JSON.stringify(warrior_2_base))
+    let attack_group = JSON.parse(JSON.stringify(attack_group_base))
+    attack_group = toHitPhase(warrior1, warrior2, attack_group);
+    total_poisoned_hits += attack_group.filter((attack) => attack.poison_proc).length
+  }
+  return {poisoned_ratio: total_poisoned_hits / number_of_simulations}
 }

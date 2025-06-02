@@ -80,6 +80,18 @@ export const weapons = {
       type: "bashing",
       tags: ['whipcrack']
   },
+  'fighting claws': {
+      name: 'fighting claws',
+      strength_mod: 0,
+      type: "slashing",
+      tags: ['parry', 'reroll parry']
+  },
+  'weeping blades': {
+      name: 'weeping blades',
+      strength_mod: 0,
+      type: "slashing",
+      tags: ['parry', 'poisoned']
+  },
 }
 
 export const armour = {
