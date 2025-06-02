@@ -86,7 +86,20 @@ export const setUpAttacks = function (attacker, defender, round_number) {
   const offhand_pistol = attacker.weapons_offhand.filter((weapon) => weapon.tags.includes('pistol'))[0]
   const weapons_equipped_this_round = []
 
-  if (round_number == 1 && mainhand_pistol) {
+  if (round_number == 1 && mainhand_pistol && mainhand_pistol.tags.includes('shoot_hth')) {
+    attacker.attack_slots.push({
+      ...createWeaponBase(attacker, defender), 
+      weapon: mainhand_pistol,
+      ap: mainhand_pistol.ap || 0,
+      strength: mainhand_pistol.strength, 
+      initiative: 199 + attacker.initiative * 0.1, // Shoot in HtH always strikes firstest
+      bs: attacker.bs - 2, // Use BS for shoot in HtH,
+      parryable: false // Shoot in HtH cannot be parried
+    })
+    weapons_equipped_this_round.push(mainhand_pistol)
+  }
+
+  if (round_number == 1 && mainhand_pistol && !mainhand_pistol.tags.includes('shoot_hth')) {
     attacker.attack_slots.push({
       ...createWeaponBase(attacker, defender), 
       weapon: mainhand_pistol,
@@ -340,6 +353,10 @@ const toHit = function (attacker_ws, defender_ws) {
   return 4
 }
 
+const toHitRanged = function (attacker_bs) {
+  return 7 - attacker_bs
+}
+
 export const toHitPhase = function (attacker, defender, attack_group, house_rules={
   minus1ToHitOffhand: false,
   minus2ToHitOffhand: false,
@@ -376,8 +393,13 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
         attack.to_hit_roll = attack.to_hit_roll - 1
       }
       
-      // Check if the to hit roll is higher than the target to hit value
-      attack.hit = attack.to_hit_roll >= toHit(attack.ws, defender.ws)
+      if (attack.weapon.tags.includes('shoot_hth')) {
+        // If the weapon is a shoot in HtH weapon, use BS to hit  
+        attack.hit = attack.to_hit_roll >= toHitRanged(attack.bs)
+      } else {
+        // Check if the to hit roll is higher than the target to hit value
+        attack.hit = attack.to_hit_roll >= toHit(attack.ws, defender.ws)
+      }
       if (!attack.hit) {
         attack.result = "Missed"
       }
@@ -394,7 +416,7 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
   const highest_hit_roll_attack = attack_group.sort((a, b) => b.to_hit_roll - a.to_hit_roll)[0]
   const max_hit_roll = highest_hit_roll_attack.to_hit_roll
 
-  if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && max_hit_roll != 'auto hit' && highest_hit_roll_attack.hit && highest_hit_roll_attack.parryable) {
+  if (combined_parry_equipment.length > 0 && max_hit_roll != 6 && max_hit_roll != 'auto hit' && highest_hit_roll_attack.hit && highest_hit_roll_attack.parryable && !defender.parry_used) {
     // If the defender has more than two weapons or armours with the parry tag, check for reroll parry tag and roll 2 dice
     let parry_roll = combined_parry_equipment.length > 1 && combined_parry_equipment.some((eq) => eq.tags.includes('reroll parry')) ? rollDice(2) : rollDice(1)
     if (debug) console.log("parry procced", parry_roll)
@@ -416,6 +438,8 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
       highest_hit_roll_attack.result = "Parried"
     }
   }
+
+  defender.parry_used = true
 
   return attack_group
 }

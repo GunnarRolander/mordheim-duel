@@ -131,8 +131,6 @@ function App() {
         <br/>
         <br/>
         <br/>
-        <br/>
-        <br/>
         <button onClick={() => runUnitTests()}>
           run unit tests
         </button>

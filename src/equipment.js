@@ -117,6 +117,13 @@ export const ranged_weapons = {
       tags: ['pistol'],
       ap: -1
   },
+  'crossbow pistol': {
+    name: 'crossbow pistol',
+    strength: 4,
+    type: "ranged",
+    tags: ['pistol', 'shoot_hth'],
+    parryable: false
+},
 }
 
 export const armour = {
