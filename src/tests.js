@@ -1,8 +1,8 @@
 import { toHitPhase, toWoundPhase, injuryPhase, doRecovery, setUpAttacks, orderAttacksByInitiative } from './combat.js';
-import { weapons, armour } from './equipment.js';
+import { weapons, armour, ranged_weapons } from './equipment.js';
 
 export const runTests = () => {
-  const warrior_1 = {
+  let warrior_1 = {
     name: "warrior_1",
     ws: 3,
     strength: 3,
@@ -20,7 +20,7 @@ export const runTests = () => {
     stood_up: false
   }
 
-  const warrior_2 = {
+  let warrior_2 = {
     name: "warrior_2",
     ws: 2,
     strength: 3,
@@ -58,8 +58,9 @@ export const runTests = () => {
   let last_warrior = {};
   
   // to Hit tests
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_2.ws = 2
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testToHitPhase(warrior_1, warrior_2, attacks)
@@ -67,8 +68,8 @@ export const runTests = () => {
   console.log("WS3 vs WS2, average number of hits:", main_hit_ratio)
   console.assert(main_hit_ratio > 0.66 && main_hit_ratio < 0.67, "WS3 vs WS2, average number of hits is not 0.666")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.ws = 3
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -77,8 +78,8 @@ export const runTests = () => {
   console.log("WS3 vs WS3, average number of hits:", main_hit_ratio)
   console.assert(main_hit_ratio > 0.49 && main_hit_ratio < 0.51, "WS3 vs WS3, average number of hits is not 0.5")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.ws = 2
   warrior_2.ws = 5
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
@@ -88,8 +89,8 @@ export const runTests = () => {
   console.assert(main_hit_ratio > 0.32 && main_hit_ratio < 0.34, "WS2 vs WS5, average number of hits is not 0.333")
 
   // to Wound-tests
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 1
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -98,8 +99,8 @@ export const runTests = () => {
   console.log("S3 vs T1 (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.83 && main_wound_ratio < 0.84, "S3 vs T1, average number of wounds is not 0.833")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 2
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -108,8 +109,8 @@ export const runTests = () => {
   console.log("S3 vs T2 (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.66 && main_wound_ratio < 0.67, "S3 vs T2, average number of wounds is not 0.666")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 3
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -118,8 +119,8 @@ export const runTests = () => {
   console.log("S3 vs T3 (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.49 && main_wound_ratio < 0.51, "S3 vs T3, average number of wounds is not 0.5")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 4
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -128,8 +129,8 @@ export const runTests = () => {
   console.log("S3 vs T4 (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.325 && main_wound_ratio < 0.34, "S3 vs T4, average number of wounds is not 0.333")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 5
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -138,8 +139,8 @@ export const runTests = () => {
   console.log("S3 vs T5 (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.16 && main_wound_ratio < 0.17, "S3 vs T5, average number of wounds is not 0.166")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 6
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -148,8 +149,8 @@ export const runTests = () => {
   console.log("S3 vs T6 (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.16 && main_wound_ratio < 0.17, "S3 vs T6, average number of wounds is not 0.166")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 7
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -159,8 +160,8 @@ export const runTests = () => {
   console.assert(main_wound_ratio == 0, "S3 vs T7, average number of wounds is not 0")
   
   // check crits
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 1
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -175,8 +176,8 @@ export const runTests = () => {
   console.assert(crit_no_armour_ratio > 0.16*2/3 && crit_no_armour_ratio < 0.17*2/3, "S3 vs T1, average number of crits with no armour save is not 0.166 * 2/3")
   console.assert(crit_bonus_injury_ratio > 0.05 && crit_bonus_injury_ratio < 0.6, "S3 vs T1, average number of crits with bonus injury is not 0.166 * 1/3")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 2
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -191,8 +192,8 @@ export const runTests = () => {
   console.assert(crit_no_armour_ratio > 0.16*2/3 && crit_no_armour_ratio < 0.17*2/3, "S3 vs T2, average number of crits with no armour save is not 0.166 * 2/3")
   console.assert(crit_bonus_injury_ratio > 0.16*1/3 && crit_bonus_injury_ratio < 0.17*1/3, "S3 vs T2, average number of crits with bonus injury is not 0.166 * 1/3")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 3
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -207,8 +208,8 @@ export const runTests = () => {
   console.assert(crit_no_armour_ratio > 0.16*2/3 && crit_no_armour_ratio < 0.17*2/3, "S3 vs T3, average number of crits with no armour save is not 0.166 * 2/3")
   console.assert(crit_bonus_injury_ratio > 0.16*1/3 && crit_bonus_injury_ratio < 0.17*1/3, "S3 vs T3, average number of crits with bonus injury is not 0.166 * 1/3")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 4
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -223,8 +224,8 @@ export const runTests = () => {
   console.assert(crit_no_armour_ratio > 0.16*2/3 && crit_no_armour_ratio < 0.17*2/3, "S3 vs T4, average number of crits with no armour save is not 0.166 * 2/3")
   console.assert(crit_bonus_injury_ratio > 0.16*1/3 && crit_bonus_injury_ratio < 0.17*1/3, "S3 vs T4, average number of crits with bonus injury is not 0.166 * 1/3")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 5
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -239,8 +240,8 @@ export const runTests = () => {
   console.assert(crit_no_armour_ratio == 0, "S3 vs T5, average number of crits with no armour save is not 0")
   console.assert(crit_bonus_injury_ratio == 0, "S3 vs T5, average number of crits with bonus injury is not 0")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 6
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -256,8 +257,8 @@ export const runTests = () => {
   console.assert(crit_bonus_injury_ratio == 0, "S3 vs T6, average number of crits with bonus injury is not 0")
 
   // Test holy vs possessed/undead
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 3
   warrior_2.tags = ['undead']
   warrior_1.weapons_mainhand = [weapons['sigmarite hammer']]
@@ -269,8 +270,8 @@ export const runTests = () => {
   console.assert(main_wound_ratio > 0.825 && main_wound_ratio < 0.84, "S3 vs T3, holy vs undead, average number of wounds is not 0.8333")
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.toughness = 3
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -285,8 +286,8 @@ export const runTests = () => {
   console.assert(stunned_ratio > 0.325 && stunned_ratio < 0.34, "1 unsaved wound, ratio of stunned injuries is not 0.333")
   console.assert(ooa_ratio > 0.325 && ooa_ratio < 0.34, "1 unsaved wound, ratio of out of action injuries is not 0.333")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testInjuryPhase(warrior_1, warrior_2, attacks, 2, 1)
@@ -300,8 +301,8 @@ export const runTests = () => {
   console.assert(stunned_ratio > 0.325 && stunned_ratio < 0.34, "1 unsaved wound, ratio of stunned injuries is not 0.333")
   console.assert(ooa_ratio > 0.66 && ooa_ratio < 0.675, "1 unsaved wound, ratio of out of action injuries is not 0.666")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.old_status = "knocked down"
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -316,8 +317,8 @@ export const runTests = () => {
   console.assert(stunned_ratio == 0, "1 unsaved wound vs knocked down warrior, ratio of stunned injuries is 0")
   console.assert(ooa_ratio == 1, "1 unsaved wound vs knocked down warrior, ratio of out of action injuries is 1")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.old_status = "stunned"
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -370,10 +371,10 @@ export const runTests = () => {
   console.assert(warrior_1.status === "out of action", "Out of action warrior, recovery status on enemies turn is not out of action")
   console.assert(warrior_1.old_status === "out of action", "Out of action warrior, recovery old_status on enemies turn is not out of action")
   console.assert(warrior_1.stood_up === false, "Out of action warrior, stood_up is not false")
-
+  
   // Test parry
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.status = "standing"
   warrior_1.old_status = "standing"
   warrior_2.old_status = "standing"
@@ -389,9 +390,10 @@ export const runTests = () => {
   console.log("WS3 vs WS2, average number of hits with parry:", main_hit_ratio)
   console.assert(main_hit_ratio > 0.49 && main_hit_ratio < 0.51, "WS3 vs WS2, average number of hits with parry is not 0.5")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.ws = 3
+  warrior_2.weapons_mainhand = [weapons['sword']]
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testToHitPhase(warrior_1, warrior_2, attacks)
@@ -399,10 +401,11 @@ export const runTests = () => {
   console.log("WS3 vs WS3, average number of hits with parry:", main_hit_ratio)
   console.assert(main_hit_ratio > 0.41 && main_hit_ratio < 0.42, "WS3 vs WS2, average number of hits with parry is not 0.4167")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.ws = 2
   warrior_2.ws = 5
+  warrior_2.weapons_mainhand = [weapons['sword']]
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testToHitPhase(warrior_1, warrior_2, attacks)
@@ -411,8 +414,8 @@ export const runTests = () => {
   console.assert(main_hit_ratio > 0.30 && main_hit_ratio < 0.31, "WS2 vs WS5, average number of hits with parry is not 0.3056")
   
   // test club's concussion rule
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['club']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
   warrior_1.ws = 3
@@ -431,8 +434,8 @@ export const runTests = () => {
   console.assert(ooa_ratio > 0.325 && ooa_ratio < 0.34, "1 unsaved wound with club, ratio of out of action injuries is not 0.333")
   
   // test helmet's stun save
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   warrior_2.armour = [armour['helmet']]
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
@@ -449,8 +452,8 @@ export const runTests = () => {
   console.assert(ooa_ratio > 0.325 && ooa_ratio < 0.34, "1 unsaved wound, ratio of out of action injuries is not 0.333")
 
   //test armour save
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.strength = 3
   warrior_2.toughness = 3
   warrior_2.armour_save = 6
@@ -461,8 +464,8 @@ export const runTests = () => {
   console.log("S3 vs T3 6+ AS (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.41 && main_wound_ratio < 0.425, "S3 vs T3, 6+ AS, average number of wounds is not 0.41666")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.armour_save = 5
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -471,8 +474,8 @@ export const runTests = () => {
   console.log("S3 vs T3 5+ AS (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.325 && main_wound_ratio < 0.34, "S3 vs T3, 5+ AS, average number of wounds is not 0.3333")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.armour_save = 4
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -481,8 +484,8 @@ export const runTests = () => {
   console.log("S3 vs T3 4+ AS (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.24 && main_wound_ratio < 0.26, "S3 vs T3, 4+ AS, average number of wounds is not 0.25")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.armour_save = 3
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -491,8 +494,8 @@ export const runTests = () => {
   console.log("S3 vs T3 3+ AS (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.16 && main_wound_ratio < 0.175, "S3 vs T3, 3+ AS, average number of wounds is not 0.1666")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.armour_save = 2
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -501,8 +504,8 @@ export const runTests = () => {
   console.log("S3 vs T3 2+ AS (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio > 0.075 && main_wound_ratio < 0.09, "S3 vs T3, 2+ AS, average number of wounds is not 0.08333")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_2.armour_save = 1
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -512,8 +515,8 @@ export const runTests = () => {
   console.assert(main_wound_ratio === 0, "S3 vs T3, 1+ AS, average number of wounds is not 0")
   
   // Test weapon initiative order
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
@@ -522,8 +525,8 @@ export const runTests = () => {
   console.log("I3 warrior fights I3 warrior, should strike first 50% of time", result.first_warrior['warrior_1'] || 0)
   console.assert(result.first_warrior['warrior_1'] > 0.495 && result.first_warrior['warrior_1'] < 0.505, "warrior_1 does not strike first 50% of time")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
   warrior_2.charged = true
@@ -533,8 +536,8 @@ export const runTests = () => {
   console.log("I3 warrior gets charged by I3 warrior, should strike first 0% of time", result.first_warrior['warrior_1'] || 0)
   console.assert(result.first_warrior['warrior_1'] || 0 == 0, "warrior_1 does not strike first 0% of time")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['spear']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
   warrior_2.charged = true
@@ -544,8 +547,8 @@ export const runTests = () => {
   console.log("I3 Spear gets charged by I3 warrior, should strike first 50% of time", result.first_weapon['spear'])
   console.assert(result.first_weapon['spear'] > 0.495 && result.first_weapon['spear'] < 0.505, "spear does not strike first 50% of time")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['spear']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
   warrior_2.charged = true
@@ -556,8 +559,8 @@ export const runTests = () => {
   console.log("I4 Spear gets charged by I3 warrior, should strike first 100% of time", result.first_weapon['spear'])
   console.assert(result.first_weapon['spear'] == 1, "spear does not strike first 100% of time")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['spear']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
   warrior_2.charged = true
@@ -568,8 +571,8 @@ export const runTests = () => {
   console.log("I2 Spear gets charged by I3 warrior, should strike first 0% of time", result.first_weapon['spear'] || 0)
   console.assert((result.first_weapon['spear'] || 0) == 0, "spear does not strike first 0% of time")
   
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   warrior_2.weapons_mainhand = [weapons['great weapon']]
   warrior_2.charged = true
@@ -579,8 +582,8 @@ export const runTests = () => {
   console.log("I3 warrior gets charged by I3 warrior with great weapon, should strike first 100% of time", result.first_warrior['warrior_1'] || 0)
   console.assert((result.first_warrior['warrior_1'] || 0) == 1, "warrior_1 does not strike first 100% of time")
 
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   warrior_2.weapons_mainhand = [weapons['great weapon']]
   warrior_1.stood_up = true
@@ -591,8 +594,8 @@ export const runTests = () => {
   console.assert((result.first_warrior['warrior_1'] || 0) == 0, "warrior_1 does not strike last 100% of time")
 
   // Steel whip tests
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['steel whip']]
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -605,13 +608,58 @@ export const runTests = () => {
   console.assert(attacks.length == 1, "Steel whip does not have one attack second turn of combat")
 
   // Weeping blade tests
-  resetWarrior(warrior_1)
-  resetWarrior(warrior_2)
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['weeping blades']]
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   result = testPoisonedWeapons(warrior_1, warrior_2, attacks)
   console.log("Weeping blade should have 1/6 of attacks trigger poison", result.poisoned_ratio)
   console.assert(result.poisoned_ratio > 0.16 && result.poisoned_ratio < 0.173, "Weeping blade does not have 1/6 of attacks trigger poison")
+
+   // Pistol tests
+   warrior_1 = resetWarrior(warrior_1)
+   warrior_2 = resetWarrior(warrior_2)
+   warrior_1.weapons_mainhand = [weapons['handweapon'], ranged_weapons['pistol']]
+   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+   setUpAttacks(warrior_2, warrior_1, 1)
+   console.log("A warrior armed with a pistol in the main hand should have a single pistol attack first turn of combat.", attacks.length, attacks[0].weapon.name, attacks[0].strength)
+   console.assert(attacks.length == 1, "A warrior armed with a pistol does not have a single pistol attack first turn of combat")
+   console.assert(attacks[0].weapon.name == 'pistol', "The single attack is not made with the pistol")
+   console.assert(attacks[0].strength == 4, "The single attack is not made with the pistols strength")
+   attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
+   console.assert(attacks[0].weapon.name != 'pistol', "A warrior armed with a pistol has a pistol attack after first turn of combat")
+
+   warrior_1 = resetWarrior(warrior_1)
+   warrior_2 = resetWarrior(warrior_2)
+   warrior_1.weapons_mainhand = [weapons['handweapon'], ranged_weapons['pistol']]
+   warrior_1.weapons_offhand = [ranged_weapons['pistol']]
+   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+   setUpAttacks(warrior_2, warrior_1, 1)
+   console.log("A warrior armed with a brace of pistols should have two pistol attacks first turn of combat.", attacks.length)
+   console.assert(attacks.length == 2, "A warrior armed with a brace of pistols does not have two pistol attacks first turn of combat")
+   console.assert(attacks[0].weapon.name == 'pistol' && attacks[1].weapon.name == 'pistol', "The attacks are not made with the pistols")
+   attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
+   console.assert(attacks[0].weapon.name != 'pistol', "A warrior armed with pistols has a pistol attack after first turn of combat")
+
+   warrior_1 = resetWarrior(warrior_1)
+   warrior_2 = resetWarrior(warrior_2)
+   warrior_1.weapons_mainhand = [weapons['handweapon'], ranged_weapons['warplock pistol']]
+   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+   setUpAttacks(warrior_2, warrior_1, 1)
+   console.log("A warrior armed with a warplock pistols first round attack should be strength 5. ", attacks[0].weapon.name, attacks[0].strength)
+   console.assert(attacks[0].strength == 5, "The single attack is not made with the pistols strength")
+   attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
+   console.assert(attacks[0].weapon.name != 'warplock pistol', "A warrior armed with a warplock pistol has a pistol attack after first turn of combat")
+
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.weapons_mainhand = [weapons['handweapon'], ranged_weapons['duelling pistol']]
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testToHitPhase(warrior_1, warrior_2, attacks)
+  main_hit_ratio = result.main_hit_ratio
+  console.log("WS3 with duelling pistol vs WS3, average number of hits:", main_hit_ratio)
+  console.assert(main_hit_ratio > 0.66 && main_hit_ratio < 0.67, "WS3 with duelling pistol vs WS3, average number of hits is not 0.666")
 }
 
 const testToHitPhase = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {

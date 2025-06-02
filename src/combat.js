@@ -50,6 +50,33 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
   return {win_rate_warrior_1, win_rate_warrior_2, final_rounds}
 }
 
+const createWeaponBase = function (attacker, defender) {
+  return {
+    ws: attacker.ws, 
+    bs: attacker.bs, 
+    strength: attacker.strength, 
+    initiative: attacker.initiative,
+    source: attacker.name, 
+    target: defender.name, 
+    offHand: false,
+    injury_bonus: 0,
+    injury_roll: 0,
+    injury: '',
+    crit: false,
+    hit: false,
+    wounded: false,
+    unsaved_wounds: 0,
+    wounds_caused: 0,
+    result: '',
+    to_hit_roll: 0,
+    to_wound_roll: 0,
+    armour_save_roll: 0,
+    no_armour_save: false,
+    parry_roll: 0,
+    parryable: true,
+    ap: 0
+  }
+}
 // To handle different initiative attacks, set up the attack slots for each warrior
 // then sort the attacks in initiative order, instead of sorting the warriors.
 // Make sure to save status of the target at the start of round, so no auto-OOA's occur due to timing differences.
@@ -61,59 +88,17 @@ export const setUpAttacks = function (attacker, defender, round_number) {
 
   if (round_number == 1 && mainhand_pistol) {
     attacker.attack_slots.push({
-      weapon: mainhand_pistol, 
-      ws: attacker.ws, 
-      bs: attacker.bs, 
+      ...createWeaponBase(attacker, defender), 
+      weapon: mainhand_pistol,
+      ap: mainhand_pistol.ap || 0,
       strength: mainhand_pistol.strength, 
-      initiative: attacker.initiative,
-      source: attacker.name, 
-      target: defender.name, 
-      offHand: false,
-      injury_bonus: 0,
-      injury_roll: 0,
-      injury: '',
-      crit: false,
-      hit: false,
-      wounded: false,
-      unsaved_wounds: 0,
-      wounds_caused: 0,
-      result: '',
-      to_hit_roll: 0,
-      to_wound_roll: 0,
-      armour_save_roll: 0,
-      no_armour_save: false,
-      parry_roll: 0,
-      parryable: true,
-      ap: mainhand_pistol.ap || 0
     })
     weapons_equipped_this_round.push(mainhand_pistol)
   } else {
     for (let i = 0; i < attacker.attacks; i++) {
       attacker.attack_slots.push({
-        weapon: attacker.weapons_mainhand[0],
-        ws: attacker.ws,
-        bs: attacker.bs, 
-        strength: attacker.strength, 
-        initiative: attacker.initiative, 
-        source: attacker.name, 
-        target: defender.name, 
-        offHand: false,
-        injury_bonus: 0,
-        injury_roll: 0,
-        injury: '',
-        crit: false,
-        hit: false,
-        wounded: false,
-        unsaved_wounds: 0,
-        wounds_caused: 0,
-        result: '',
-        to_hit_roll: 0,
-        to_wound_roll: 0,
-        armour_save_roll: 0,
-        no_armour_save: false,
-        parry_roll: 0,
-        parryable: true,
-        ap: attacker.weapons_mainhand[0].ap || 0
+        ...createWeaponBase(attacker, defender), 
+        weapon: attacker.weapons_mainhand[0]
       })
     }
     weapons_equipped_this_round.push(attacker.weapons_mainhand[0])
@@ -121,58 +106,16 @@ export const setUpAttacks = function (attacker, defender, round_number) {
 
   if (round_number == 1 && offhand_pistol) {
     attacker.attack_slots.push({
-      weapon: offhand_pistol, 
-      ws: attacker.ws,
-      bs: attacker.bs, 
+      ...createWeaponBase(attacker, defender), 
+      weapon: offhand_pistol,
       strength: offhand_pistol.strength, 
-      initiative: attacker.initiative,
-      source: attacker.name, 
-      target: defender.name, 
-      offHand: false,
-      injury_bonus: 0,
-      injury_roll: 0,
-      injury: '',
-      crit: false,
-      hit: false,
-      wounded: false,
-      unsaved_wounds: 0,
-      wounds_caused: 0,
-      result: '',
-      to_hit_roll: 0,
-      to_wound_roll: 0,
-      armour_save_roll: 0,
-      no_armour_save: false,
-      parry_roll: 0,
-      parryable: true,
       ap: offhand_pistol.ap || 0
     })
     weapons_equipped_this_round.push(offhand_pistol)
   } else if (attacker.weapons_offhand[0] && !attacker.weapons_offhand[0].tags.includes('pistol')) {
     attacker.attack_slots.push({
+      ...createWeaponBase(attacker, defender), 
       weapon: attacker.weapons_offhand[0], 
-      ws: attacker.ws,
-      bs: attacker.bs, 
-      strength: attacker.strength, 
-      initiative: attacker.initiative, 
-      source: attacker.name, 
-      target: defender.name, 
-      offHand: true,
-      injury_bonus: 0,
-      injury_roll: 0,
-      injury: '',
-      crit: false,
-      hit: false,
-      wounded: false,
-      unsaved_wounds: 0,
-      wounds_caused: 0,
-      result: '',
-      to_hit_roll: 0,
-      to_wound_roll: 0,
-      armour_save_roll: 0,
-      no_armour_save: false,
-      parry_roll: 0,
-      parryable: true,
-      ap: attacker.weapons_offhand[0].ap || 0
     })
     weapons_equipped_this_round.push(attacker.weapons_offhand[0])
   }
@@ -181,37 +124,16 @@ export const setUpAttacks = function (attacker, defender, round_number) {
     for (const weapon of weapons_equipped_this_round) {
       if (weapon.tags.includes('whipcrack')) {
         attacker.attack_slots.push({
-          weapon: weapon,
-          ws: attacker.ws,
-          bs: attacker.bs, 
-          strength: attacker.strength, 
-          initiative: 99 + attacker.initiative * 0.1, // Whipcrack always strikes first
-          source: attacker.name, 
-          target: defender.name, 
-          offHand: false,
-          injury_bonus: 0,
-          injury_roll: 0,
-          injury: '',
-          crit: false,
-          hit: false,
-          wounded: false,
-          unsaved_wounds: 0,
-          wounds_caused: 0,
-          result: '',
-          to_hit_roll: 0,
-          to_wound_roll: 0,
-          armour_save_roll: 0,
-          no_armour_save: false,
-          parry_roll: 0,
+          ...createWeaponBase(attacker, defender), 
+          weapon: weapon, 
           parryable: false,
-          ap: weapon.ap || 0
+          initiative: 99 + attacker.initiative * 0.1, // Whipcrack always strikes first
         })
         break
       }
     }
   }
   attacker.weapons = weapons_equipped_this_round
-
   return attacker
 }
 
@@ -368,6 +290,7 @@ const createWarriorFromForm = function (name, formData) {
   const warrior = {
     name: name,
     ws: parseInt(formData.WS),
+    bs: parseInt(formData.BS),
     strength: parseInt(formData.S),
     toughness: parseInt(formData.T),
     attacks: parseInt(formData.A),
