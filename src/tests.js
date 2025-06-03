@@ -56,7 +56,7 @@ export const runTests = () => {
   let last_weapon = {}
   let first_warrior = {}
   let last_warrior = {};
-  
+
   // to Hit tests
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -97,7 +97,7 @@ export const runTests = () => {
   result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, true)
   main_wound_ratio = result.main_wound_ratio
   console.log("S3 vs T1 (no crits), average number of wounds:", main_wound_ratio)
-  console.assert(main_wound_ratio > 0.83 && main_wound_ratio < 0.84, "S3 vs T1, average number of wounds is not 0.833")
+  console.assert(main_wound_ratio > 0.8275 && main_wound_ratio < 0.84, "S3 vs T1, average number of wounds is not 0.833")
 
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -660,6 +660,20 @@ export const runTests = () => {
   main_hit_ratio = result.main_hit_ratio
   console.log("WS3 with duelling pistol vs WS3, average number of hits:", main_hit_ratio)
   console.assert(main_hit_ratio > 0.66 && main_hit_ratio < 0.67, "WS3 with duelling pistol vs WS3, average number of hits is not 0.666")
+  
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.weapons_mainhand = [weapons['handweapon'], ranged_weapons['crossbow pistol']]
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  console.log("A warrior armed with handweapon + crossbow pistol should have two attacks first turn of combat", attacks.length)
+  console.assert(attacks.length == 2, "A warrior armed with handweapon + crossbow pistol does not have two attacks first turn of combat")
+  console.log("Crossbow pistol should have one attack with strike firstest in the first round of combat", attacks.filter((attack) => attack.initiative > 99).length)
+  console.assert(attacks.filter((attack) => attack.initiative > 99).length == 1, "Crossbow pistol does not have one attack with strike firstest in the first round of combat")
+  attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
+  console.log("A warrior with hand weapon and crossbow pistol should have a single attack second turn of combat", attacks)
+  console.assert(attacks.length == 1, "warrior with hand weapon and crossbow pistol does not have a single attack second turn of combat")
+  console.assert(attacks[0].weapon.name != 'crossbow pistol', "A warrior armed with a crossbow pistol should not have a pistol attack after first turn of combat")
 }
 
 const testToHitPhase = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {

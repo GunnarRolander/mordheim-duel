@@ -117,18 +117,33 @@ export const setUpAttacks = function (attacker, defender, round_number) {
     weapons_equipped_this_round.push(attacker.weapons_mainhand[0])
   }
 
-  if (round_number == 1 && offhand_pistol) {
+  if (round_number == 1 && offhand_pistol && offhand_pistol.tags.includes('shoot_hth')) {
+    attacker.attack_slots.push({
+      ...createWeaponBase(attacker, defender), 
+      weapon: offhand_pistol,
+      ap: offhand_pistol.ap || 0,
+      strength: offhand_pistol.strength, 
+      initiative: 199 + attacker.initiative * 0.1, // Shoot in HtH always strikes firstest
+      bs: attacker.bs - 2, // Use BS for shoot in HtH,
+      parryable: false // Shoot in HtH cannot be parried
+    })
+    weapons_equipped_this_round.push(offhand_pistol)
+  }
+
+  if (round_number == 1 && offhand_pistol && !offhand_pistol.tags.includes('shoot_hth')) {
     attacker.attack_slots.push({
       ...createWeaponBase(attacker, defender), 
       weapon: offhand_pistol,
       strength: offhand_pistol.strength, 
-      ap: offhand_pistol.ap || 0
+      ap: offhand_pistol.ap || 0,
+      offHand: true
     })
     weapons_equipped_this_round.push(offhand_pistol)
   } else if (attacker.weapons_offhand[0] && !attacker.weapons_offhand[0].tags.includes('pistol')) {
     attacker.attack_slots.push({
       ...createWeaponBase(attacker, defender), 
-      weapon: attacker.weapons_offhand[0], 
+      weapon: attacker.weapons_offhand[0],
+      offHand: true 
     })
     weapons_equipped_this_round.push(attacker.weapons_offhand[0])
   }
@@ -154,9 +169,15 @@ const setInitiativeOfAttacks = function (attack, warrior) {
   let initiative = attack.initiative
   initiative += attack.weapon.init_mod ? attack.weapon.init_mod : 0
 
+  
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
-  if (attack.weapon.tags.includes('strike first') || warrior.charged) {
+  if (attack.weapon.tags.includes('strike first') || warrior.charger) {
     initiative = 99 + warrior.initiative * 0.1
+  }
+
+  // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
+  if (attack.weapon.tags.includes('shoot_hth')) {
+    initiative = 199 + warrior.initiative * 0.1
   }
 
   // If the weapon of an attack has a tag that indicates it should strike last, set the initiative to -1
@@ -167,6 +188,8 @@ const setInitiativeOfAttacks = function (attack, warrior) {
   if (warrior.stood_up) {
     initiative = -2
   }
+
+  attack.initiative = initiative
 
   return initiative
 }
@@ -185,13 +208,14 @@ export const orderAttacksByInitiative = function (attacker, defender) {
     const initiative_a = setInitiativeOfAttacks(a, warrior_a)
     const initiative_b = setInitiativeOfAttacks(b, warrior_b)
 
-    // If the initiative is the same, check if the source is the same
     if (initiative_a === initiative_b) {
+      // If the initiative is the same, check if the source is the same
       if (a.source === b.source) {
         // If both attacks are from the same source, sort by offhand
         return a.offHand - b.offHand // false (0) comes before true (1)
       }
-      const tie_roll = tie_rolls[initiative_a] || rollDice(1)[0] >= 4 ? a.source : b.source
+      let tie_roll = tie_rolls[initiative_a]
+      tie_roll = tie_roll ? tie_roll : rollDice(1)[0] >= 4 ? a.source : b.source
       tie_rolls[initiative_a] = tie_roll
 
       if (tie_roll === a.source) {
@@ -237,7 +261,7 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
   while (!fight_done) {
     round_number += 1
     // Recovery phase
-    // The charger recovvers on round 1, 3, 5 etc and the charge-receiver recovers on round 2, 4, 6 etc
+    // The charger recovers on round 1, 3, 5 etc and the charge-receiver recovers on round 2, 4, 6 etc
     doRecovery(warrior_1, round_number % 2 == 1)
     doRecovery(warrior_2, round_number % 2 == 0)
 
@@ -266,6 +290,7 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
     first_round = false
 
     fight_log.push({'round': round_number, w1s: warrior_1.status, w2s: warrior_2.status, grouped_attacks: JSON.parse(JSON.stringify(grouped_attacks))})
+    warrior_1.charger = false // Reset the charger status for the next round
   }
   if (debug) console.log(fight_log)
   const winner = warrior_1.status == "out of action" ? warrior_2 : warrior_1
@@ -409,7 +434,7 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
   // Check if opponent has parry equipment
   const parry_weapons = defender.weapons.filter((weapon) => weapon.tags.includes('parry'))
   const parry_armour = defender.armour.filter((armour) => armour.tags.includes('parry'))
-  if (debug) console.log("parry equipment", parry_weapons, parry_armour)
+  //if (debug) console.log("parry equipment", parry_weapons, parry_armour)
 
   // Combine all parry equipment and combine all to hit rolls to determine if parry is possible, and if re-roll parry is available
   const combined_parry_equipment = [...parry_weapons, ...parry_armour]
