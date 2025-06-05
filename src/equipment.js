@@ -152,3 +152,18 @@ export const armour = {
     save: 0
   },
 }
+
+export const skills = {
+    'strike to injure': {
+        name: 'strike to injure',
+        tags: [],
+    },
+    'web of steel': {
+        name: 'web of steel',
+        tags: [],
+    },
+    'expert swordsman': {
+        name: 'expert swordsman',
+        tags: [],
+    }
+}

@@ -2,8 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { weapons, armour, ranged_weapons } from './equipment.js';
 import ArmourComponent from './ArmourComponent.jsx';
+import Accordion from './components/accordion.jsx';
 
 const WarriorComponent = ({ handleWarriorChange }) => {
+    const taglist = ['Possessed', 'Undead'];
+
     const [formData, setFormData] = useState({
         WS: 3,
         BS: 3,
@@ -20,7 +23,8 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         selectedArmour: [],
         charger: false,
         tags: [],
-        armourSave: 7
+        armourSave: 7,
+        skills: [],
     });
 
     useEffect(() => {
@@ -44,6 +48,19 @@ const WarriorComponent = ({ handleWarriorChange }) => {
             return {
                 ...prevFormData,
                 tags: newTags
+            };
+        });
+    }
+
+    const handleSkillsChange = (e) => {
+        const { name, checked } = e.target;
+        setFormData((prevFormData) => {
+            const newSkills = checked
+                ? [...prevFormData.skills, name]
+                : prevFormData.skills.filter((skill) => skill !== name);
+            return {
+                ...prevFormData,
+                skills: newSkills
             };
         });
     }
@@ -88,8 +105,6 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                 <label>Offhand </label><br/>
                 <label>Offhand (pistol) </label><br/>
                 <label>Charger</label><br/>
-                <label>Undead</label><br/>
-                <label>Possessed</label><br/>
             </div>
             <div>
                 <select style={{ float: 'right' }} name="mainHand" value={formData.mainHand} onChange={handleChange}>
@@ -116,10 +131,29 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                     ))}
                 </select><br/>
                 <input style={{ float: 'right' }} type="checkbox" name="charger" checked={formData.charger} onChange={handleChange} /><br/>
-                <input style={{ float: 'right' }} type="checkbox" name="undead" checked={formData.tags.includes('undead')} onChange={handleTagChange} /><br/>
-                <input style={{ float: 'right' }} type="checkbox" name="possessed" checked={formData.tags.includes('possessed')} onChange={handleTagChange} /><br/>
             </div>
         </div>
+        <Accordion
+            title="Tags"
+        >
+            {taglist.map(tag => (
+                <div key={tag.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ textAlign: 'left'}}>
+                        <label htmlFor={`tag-${tag}`}>{tag.label}</label>
+                    </div>
+                    <div>
+                    <input
+                        type="checkbox"
+                        name={tag.name}
+                        checked={formData.tags.includes(tag)}
+                        onChange={handleTagChange}
+                        id={`tag-${tag.name}`}
+                        style={{ float: 'right' }}
+                    />
+                    </div>
+                </div>
+            ))}
+        </Accordion>
       </form>
     );
 };
