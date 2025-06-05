@@ -1,11 +1,14 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
-import { weapons, armour, ranged_weapons } from './equipment.js';
+import { weapons, armour, ranged_weapons, skills } from './equipment.js';
 import ArmourComponent from './ArmourComponent.jsx';
 import Accordion from './components/accordion.jsx';
 
 const WarriorComponent = ({ handleWarriorChange }) => {
-    const taglist = ['Possessed', 'Undead'];
+    const taglist = [
+        {label: 'Possessed', name: 'possessed'},
+        {label:'Undead', name: 'undead'}
+    ];
 
     const [formData, setFormData] = useState({
         WS: 3,
@@ -145,9 +148,72 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                     <input
                         type="checkbox"
                         name={tag.name}
-                        checked={formData.tags.includes(tag)}
+                        checked={formData.tags.includes(tag.name)}
                         onChange={handleTagChange}
                         id={`tag-${tag.name}`}
+                        style={{ float: 'right' }}
+                    />
+                    </div>
+                </div>
+            ))}
+        </Accordion>
+        <Accordion
+            title="Combat skills"
+        >
+            {skills.filter((skill) => skill.category == 'combat').map(skill => (
+                <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ textAlign: 'left'}}>
+                        <label htmlFor={`skill-${skill}`}>{skill.label}</label>
+                    </div>
+                    <div>
+                    <input
+                        type="checkbox"
+                        name={skill.name}
+                        checked={formData.skills.includes(skill.name)}
+                        onChange={handleSkillsChange}
+                        id={`skill-${skill.name}`}
+                        style={{ float: 'right' }}
+                    />
+                    </div>
+                </div>
+            ))}
+        </Accordion>
+        <Accordion
+            title="Strength skills"
+        >
+            {skills.filter((skill) => skill.category == 'strength').map(skill => (
+                <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ textAlign: 'left'}}>
+                        <label htmlFor={`skill-${skill}`}>{skill.label}</label>
+                    </div>
+                    <div>
+                    <input
+                        type="checkbox"
+                        name={skill.name}
+                        checked={formData.skills.includes(skill.name)}
+                        onChange={handleSkillsChange}
+                        id={`skill-${skill.name}`}
+                        style={{ float: 'right' }}
+                    />
+                    </div>
+                </div>
+            ))}
+        </Accordion>
+        <Accordion
+            title="Speed skills"
+        >
+            {skills.filter((skill) => skill.category == 'speed').map(skill => (
+                <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ textAlign: 'left'}}>
+                        <label htmlFor={`skill-${skill}`}>{skill.label}</label>
+                    </div>
+                    <div>
+                    <input
+                        type="checkbox"
+                        name={skill.name}
+                        checked={formData.skills.includes(skill.name)}
+                        onChange={handleSkillsChange}
+                        id={`skill-${skill.name}`}
                         style={{ float: 'right' }}
                     />
                     </div>
