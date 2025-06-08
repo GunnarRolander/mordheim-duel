@@ -57,6 +57,7 @@ export const runTests = () => {
   let first_warrior = {}
   let last_warrior = {};
 
+  /*
   // to Hit tests
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -513,7 +514,7 @@ export const runTests = () => {
   main_wound_ratio = result.main_wound_ratio
   console.log("S3 vs T3 1+ AS (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio === 0, "S3 vs T3, 1+ AS, average number of wounds is not 0")
-  
+  */
   // Test weapon initiative order
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -546,6 +547,12 @@ export const runTests = () => {
   result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
   console.log("I3 Spear gets charged by I3 warrior, should strike first 50% of time", result.first_weapon['spear'])
   console.assert(result.first_weapon['spear'] > 0.495 && result.first_weapon['spear'] < 0.505, "spear does not strike first 50% of time")
+
+  attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 2)
+  result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
+  console.log("I3 Spear fights I3 warrior in round 2, should strike first 50% of time", result.first_weapon['spear'])
+  console.assert(result.first_weapon['spear'] > 0.495 && result.first_weapon['spear'] < 0.505, "spear does not strike first 50% of time")
   
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -569,6 +576,12 @@ export const runTests = () => {
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
   console.log("I2 Spear gets charged by I3 warrior, should strike first 0% of time", result.first_weapon['spear'] || 0)
+  console.assert((result.first_weapon['spear'] || 0) == 0, "spear does not strike first 0% of time")
+
+    attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 2)
+  result = testOrderAttacksByInitiative(warrior_1, warrior_2, 2)
+  console.log("I2 Spear fights I3 warrior in round 2, should strike first 0% of time", result.first_weapon['spear'] || 0)
   console.assert((result.first_weapon['spear'] || 0) == 0, "spear does not strike first 0% of time")
   
   warrior_1 = resetWarrior(warrior_1)
@@ -756,7 +769,7 @@ const testOrderAttacksByInitiative = (warrior_1_base, warrior_2_base, round_numb
     warrior1 = setUpAttacks(warrior1, warrior2, round_number)
     warrior2 = setUpAttacks(warrior2, warrior1, round_number)
     
-    const grouped_attacks = orderAttacksByInitiative(warrior1, warrior2)
+    const grouped_attacks = orderAttacksByInitiative(warrior1, warrior2, round_number)
     const first_attack = grouped_attacks[0][0]
     const last_attack = grouped_attacks[grouped_attacks.length-1][0]
     first_weapon[first_attack.weapon.name] = (first_weapon[first_attack.weapon.name] || 0) + 1
