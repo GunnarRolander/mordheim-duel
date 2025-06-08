@@ -9,7 +9,7 @@ const Accordion = ({ title, children }) => {
                 onClick={() => setAccordionOpen(!accordionOpen)}
                 style={{
                     cursor: 'pointer',
-                    padding: '6px 10px',
+                    padding: '0px 10px',
                     fontWeight: 'bold',
                     borderRadius: '4px 4px 0 0'
                 }}
