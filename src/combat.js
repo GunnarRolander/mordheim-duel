@@ -50,9 +50,9 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
   return {win_rate_warrior_1, win_rate_warrior_2, final_rounds}
 }
 
-const createWeaponBase = function (attacker, defender) {
+const createWeaponBase = function (attacker, defender, ws) {
   return {
-    ws: attacker.ws, 
+    ws: ws, 
     bs: attacker.bs, 
     strength: attacker.strength, 
     initiative: attacker.initiative,
@@ -81,6 +81,16 @@ const createWeaponBase = function (attacker, defender) {
 // then sort the attacks in initiative order, instead of sorting the warriors.
 // Make sure to save status of the target at the start of round, so no auto-OOA's occur due to timing differences.
 export const setUpAttacks = function (attacker, defender, round_number) {
+ 
+  let nbr_attacks = attacker.attacks
+  let ws = attacker.ws
+
+  if (attacker.skills.includes('pit fighter')) {
+    // If the attacker has the pit fighter skill, they get +1 attack and +1 WS
+    nbr_attacks += 1
+    ws += 1
+  }
+
   attacker.attack_slots = []
   const mainhand_pistol = attacker.weapons_mainhand.filter((weapon) => weapon.tags.includes('pistol'))[0]
   const offhand_pistol = attacker.weapons_offhand.filter((weapon) => weapon.tags.includes('pistol'))[0]
@@ -88,7 +98,7 @@ export const setUpAttacks = function (attacker, defender, round_number) {
 
   if (round_number == 1 && mainhand_pistol && mainhand_pistol.tags.includes('shoot_hth')) {
     attacker.attack_slots.push({
-      ...createWeaponBase(attacker, defender), 
+      ...createWeaponBase(attacker, defender, ws), 
       weapon: mainhand_pistol,
       ap: mainhand_pistol.ap || 0,
       strength: mainhand_pistol.strength, 
@@ -101,16 +111,16 @@ export const setUpAttacks = function (attacker, defender, round_number) {
 
   if (round_number == 1 && mainhand_pistol && !mainhand_pistol.tags.includes('shoot_hth')) {
     attacker.attack_slots.push({
-      ...createWeaponBase(attacker, defender), 
+      ...createWeaponBase(attacker, defender, ws), 
       weapon: mainhand_pistol,
       ap: mainhand_pistol.ap || 0,
       strength: mainhand_pistol.strength, 
     })
     weapons_equipped_this_round.push(mainhand_pistol)
   } else {
-    for (let i = 0; i < attacker.attacks; i++) {
+    for (let i = 0; i < nbr_attacks; i++) {
       attacker.attack_slots.push({
-        ...createWeaponBase(attacker, defender), 
+        ...createWeaponBase(attacker, defender, ws), 
         weapon: attacker.weapons_mainhand[0]
       })
     }
@@ -119,7 +129,7 @@ export const setUpAttacks = function (attacker, defender, round_number) {
 
   if (round_number == 1 && offhand_pistol && offhand_pistol.tags.includes('shoot_hth')) {
     attacker.attack_slots.push({
-      ...createWeaponBase(attacker, defender), 
+      ...createWeaponBase(attacker, defender, ws), 
       weapon: offhand_pistol,
       ap: offhand_pistol.ap || 0,
       strength: offhand_pistol.strength, 
@@ -132,7 +142,7 @@ export const setUpAttacks = function (attacker, defender, round_number) {
 
   if (round_number == 1 && offhand_pistol && !offhand_pistol.tags.includes('shoot_hth')) {
     attacker.attack_slots.push({
-      ...createWeaponBase(attacker, defender), 
+      ...createWeaponBase(attacker, defender, ws), 
       weapon: offhand_pistol,
       strength: offhand_pistol.strength, 
       ap: offhand_pistol.ap || 0,
@@ -141,7 +151,7 @@ export const setUpAttacks = function (attacker, defender, round_number) {
     weapons_equipped_this_round.push(offhand_pistol)
   } else if (attacker.weapons_offhand[0] && !attacker.weapons_offhand[0].tags.includes('pistol')) {
     attacker.attack_slots.push({
-      ...createWeaponBase(attacker, defender), 
+      ...createWeaponBase(attacker, defender, ws), 
       weapon: attacker.weapons_offhand[0],
       offHand: true 
     })
@@ -152,7 +162,7 @@ export const setUpAttacks = function (attacker, defender, round_number) {
     for (const weapon of weapons_equipped_this_round) {
       if (weapon.tags.includes('whipcrack')) {
         attacker.attack_slots.push({
-          ...createWeaponBase(attacker, defender), 
+          ...createWeaponBase(attacker, defender, ws), 
           weapon: weapon, 
           parryable: false,
           initiative: 99 + attacker.initiative * 0.1, // Whipcrack always strikes first
@@ -171,7 +181,7 @@ const setInitiativeOfAttacks = function (attack, warrior) {
 
   
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
-  if (attack.weapon.tags.includes('strike first') || warrior.charger) {
+  if (attack.weapon.tags.includes('strike first') || warrior.charger || warrior.skills.includes('lightning reflexes')) {
     initiative = 99 + warrior.initiative * 0.1
   }
 
@@ -181,7 +191,7 @@ const setInitiativeOfAttacks = function (attack, warrior) {
   }
 
   // If the weapon of an attack has a tag that indicates it should strike last, set the initiative to -1
-  if (attack.weapon.tags.includes('strike last')) {
+  if (attack.weapon.tags.includes('strike last') && !warrior.skills.includes('strongman')) {
     initiative = -1
   }
 
@@ -251,7 +261,6 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
   // Parse and stringify to create a deep copy of the objects
   let warrior_1 = JSON.parse(JSON.stringify(warrior_1_base))
   let warrior_2 = JSON.parse(JSON.stringify(warrior_2_base))
-
   
   let round_number = 0
   let fight_done = false
@@ -342,7 +351,8 @@ const createWarriorFromForm = function (name, formData) {
     armour_save: formData.armourSave,
     charger: formData.charger,
     stood_up: false,
-    tags: formData.tags
+    tags: formData.tags,
+    skills: formData.skills
   }
 
   return warrior
@@ -511,10 +521,23 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
     let strength = attack.strength
     strength += weapon.strength_mod ? weapon.strength_mod : 0 
 
+    
     // Check for first round bonuses for weapons, like morning stars, flails, etc.
     // If not first round, strength is base strength
     if (weapon?.tags.includes('first round bonus') && !first_round) {
       strength = attack.strength
+    }
+    
+    // Handle Mighty Blow skill
+    if (attacker.skills.includes('mighty blow') && attack.weapon.name.substring(attack.weapon.name.length-6) != 'pistol') {
+      strength += 1
+    }
+
+    const ap_strength = strength
+
+    // Handle Resilient skill
+    if (defender.skills.includes('resilient')) {
+      strength += -1
     }
 
     attack.to_wound_roll = rollDice(1)[0]
@@ -537,7 +560,8 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
 
     if (attack.crit) {
       attacker.crit_this_turn = true
-      const crit_roll = rollDice(1)[0]
+      let crit_roll = rollDice(1)[0]
+      if (attacker.skills.includes('web of steel')) crit_roll += 1
       const [no_armour_save, extra_wounds, injury_bonus] = getCrit(crit_roll)
       attack.no_armour_save = no_armour_save
       attack.wounds_caused = attack.wounds_caused + extra_wounds
@@ -549,10 +573,21 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
       // Roll armour save
       attack.armour_save_roll = rollDice(1)[0]
       // Check if the armour save roll is higher than the target armour save value
-      const save_successful = attack.armour_save_roll >= modifyArmourSave(strength, weapon.ap, defender.armour_save, house_rules)
+      const save_successful = attack.armour_save_roll >= modifyArmourSave(ap_strength, weapon.ap, defender.armour_save, house_rules)
       if (save_successful) {
         attack.unsaved_wounds = 0
         attack.result = "Blocked by armour"
+      }
+    }
+
+    if (defender.skills.includes('step aside') ) {
+      // Roll Step Aside
+      attack.step_aside_roll = rollDice(1)[0]
+      // Check if the step aside roll is higher or equal to 5+
+      const save_successful = attack.step_aside_roll >= 5
+      if (save_successful) {
+        attack.unsaved_wounds = 0
+        attack.result = "Blocked by Step Aside"
       }
     }
   }
@@ -582,7 +617,8 @@ export const injuryPhase = function (attacker, defender, attack_group) {
 
         if (defender.wounds < 1) {
           const injury_rolls = rollDice(1 - defender.wounds)
-          for (const injury_roll of injury_rolls) {
+          for (let injury_roll of injury_rolls) {
+            if (attacker.skills.includes('strike to injure')) injury_roll += 1
             const injury = getInjury(attack.injury_bonus ? injury_roll + attack.injury_bonus : injury_roll, attack, defender)
             if ((defender.status == "knocked down" || defender.status == "standing") || injury == "out of action") {
               defender.status = injury

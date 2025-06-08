@@ -171,6 +171,63 @@ export const skills = [
         label: 'Expert Swordsman',
         tags: [],
         category: 'combat',
+        disabled: true
+    },
+    {
+        name: 'step aside',
+        label: 'Step Aside',
+        tags: [],
+        category: 'combat',
+    },
+    {
+        name: 'mighty blow',
+        label: 'Mighty Blow',
+        tags: [],
+        category: 'strength',
+    },
+    {
+        name: 'pit fighter',
+        label: 'Pit Fighter',
+        tags: [],
+        category: 'strength',
+    },
+    {
+        name: 'resilient',
+        label: 'Resilient',
+        tags: [],
+        category: 'strength',
+    },
+    {
+        name: 'fearsome',
+        label: 'Fearsome',
+        tags: [],
+        category: 'strength',
+        disabled: true
+    },
+    {
+        name: 'strongman',
+        label: 'Strongman',
+        tags: [],
+        category: 'strength',
+    },
+    {
+        name: 'unstoppable charge',
+        label: 'Unstoppable Charge',
+        tags: [],
+        category: 'strength',
+        disabled: true
+    },
+    {
+        name: 'lightning reflexes',
+        label: 'Lightning Reflexes',
+        tags: [],
+        category: 'speed'
+    },
+    {
+        name: 'jump up',
+        label: 'Jump Up',
+        tags: [],
+        category: 'speed'
     }
 ]
 

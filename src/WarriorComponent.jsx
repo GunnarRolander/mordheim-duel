@@ -173,6 +173,7 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                         onChange={handleSkillsChange}
                         id={`skill-${skill.name}`}
                         style={{ float: 'right' }}
+                        disabled ={skill.disabled || false} // Disable skill if specified
                     />
                     </div>
                 </div>
