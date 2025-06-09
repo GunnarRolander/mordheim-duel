@@ -23,7 +23,7 @@ export const weapons = {
       name: 'sword',
       strength_mod: 0,
       type: "slashing",
-      tags: ['parry']
+      tags: ['parry', 'sword']
   },
   'axe': {
       name: 'axe',
@@ -90,7 +90,7 @@ export const weapons = {
       name: 'weeping blades',
       strength_mod: 0,
       type: "slashing",
-      tags: ['parry', 'poisoned']
+      tags: ['parry', 'poisoned', 'sword']
   }
 }
 
@@ -171,7 +171,7 @@ export const skills = [
         label: 'Expert Swordsman',
         tags: [],
         category: 'combat',
-        disabled: true
+        disabled: false
     },
     {
         name: 'step aside',
@@ -215,7 +215,7 @@ export const skills = [
         label: 'Unstoppable Charge',
         tags: [],
         category: 'strength',
-        disabled: true
+        disabled: false
     },
     {
         name: 'lightning reflexes',

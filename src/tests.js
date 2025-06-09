@@ -19,6 +19,7 @@ export const runTests = () => {
     charger: false,
     stood_up: false,
     skills: [],
+    tags: [],
   }
 
   let warrior_2 = {
@@ -38,6 +39,7 @@ export const runTests = () => {
     charger: false,
     stood_up: false,
     skills: [],
+    tags: [],
   }
 
   let attack_group = []
@@ -951,6 +953,7 @@ const resetWarrior = (warrior) => {
     charger: false,
     stood_up: false,
     skills: [],
+    tags: [],
   }
   return warrior
 }

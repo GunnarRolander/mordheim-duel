@@ -74,7 +74,8 @@ const createWeaponBase = function (attacker, defender, ws) {
     no_armour_save: false,
     parry_roll: 0,
     parryable: true,
-    ap: 0
+    ap: 0,
+    reroll_misses: false
   }
 }
 // To handle different initiative attacks, set up the attack slots for each warrior
@@ -168,6 +169,16 @@ export const setUpAttacks = function (attacker, defender, round_number) {
           initiative: 99 + attacker.initiative * 0.1, // Whipcrack always strikes first
         })
         break
+      }
+    }
+
+    for (const attack of attacker.attack_slots) {
+      if ((attacker.skills.includes('expert swordsman') && attacker.charger && attack.weapon.tags.includes('sword')) || attacker.tags.includes('hatred')) {
+        // If the attacker has the expert swordsman skill, they get +1 WS and +1 initiative for sword attacks
+        attack.reroll_misses = true
+      }
+      if (attacker.skills.includes('unstoppable charge') && attacker.charger) {
+        attack.ws += 1
       }
     }
   }
@@ -392,21 +403,68 @@ const toHitRanged = function (attacker_bs) {
   return 7 - attacker_bs
 }
 
+const rollToHit = function (attack, defender, house_rules={
+  minus1ToHitOffhand: false,
+  minus2ToHitOffhand: false,
+  minusToHitOffhand: 0,
+  minusToHitDW: false,
+  addWSToParry: false
+}) {
+  const {minusToHitOffhand, minusToHitDW} = house_rules
+  const weapon = attack.weapon
+  const offhand = attack.offHand
+  if (defender.old_status == "knocked down" || defender.old_status == "stunned") {
+    attack.to_hit_roll = ['auto hit']
+    attack.hit = true
+    if (debug) console.log("defender " + defender.old_status + ", auto hit", attack)
+  } else {
+    attack.to_hit_roll = rollDice(1)[0]
+    attack.to_hit_roll += weapon.hit_mod ? weapon.hit_mod : 0 
+
+    if (attack.to_hit_roll == 6 && weapon.tags.includes('poisoned')) {
+      attack.poison_proc = true
+    }
+    
+    // Apply offhand house rules, if active
+    if (offhand && minusToHitOffhand > 0) {
+      attack.to_hit_roll = attack.to_hit_roll - minusToHitOffhand
+    }
+    // If double weapon house rule is active, subtract 1 from all to hit roll
+    if (minusToHitDW && attacker.weapons.length > 1) {
+      attack.to_hit_roll = attack.to_hit_roll - 1
+    }
+    
+    if (attack.weapon.tags.includes('shoot_hth')) {
+      // If the weapon is a shoot in HtH weapon, use BS to hit  
+      attack.hit = attack.to_hit_roll >= toHitRanged(attack.bs)
+    } else {
+      // Check if the to hit roll is higher than the target to hit value
+      attack.hit = attack.to_hit_roll >= toHit(attack.ws, defender.ws)
+    }
+    if (!attack.hit) {
+      attack.result = "Missed"
+    }
+  }
+}
+
 export const toHitPhase = function (attacker, defender, attack_group, house_rules={
   minus1ToHitOffhand: false,
   minus2ToHitOffhand: false,
   minusToHitOffhand: 0,
   minusToHitDW: false,
-  addWSToParry: false,
-  ogSpears: false
+  addWSToParry: false
 }) {
   const {minusToHitOffhand, minusToHitDW, addWSToParry} = house_rules
   
   // Initiate variables, these will be updated in the to hit, to wound and armour save phases
   for (const attack of attack_group) {
+    rollToHit(attack, defender, house_rules)
+    if (!attack.hit && attack.reroll_misses) {
+      rollToHit(attack, defender, house_rules)
+    }
+    /*
     const weapon = attack.weapon
     const offhand = attack.offHand
-    
     if (defender.old_status == "knocked down" || defender.old_status == "stunned") {
       attack.to_hit_roll = ['auto hit']
       attack.hit = true
@@ -438,7 +496,7 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
       if (!attack.hit) {
         attack.result = "Missed"
       }
-    }
+    }*/
   }
 
   // Check if opponent has parry equipment

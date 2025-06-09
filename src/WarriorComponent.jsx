@@ -7,7 +7,8 @@ import Accordion from './components/accordion.jsx';
 const WarriorComponent = ({ handleWarriorChange }) => {
     const taglist = [
         {label: 'Possessed', name: 'possessed'},
-        {label:'Undead', name: 'undead'}
+        {label:'Undead', name: 'undead'},
+        {label:'Hatred', name: 'hatred'}
     ];
 
     const [formData, setFormData] = useState({
