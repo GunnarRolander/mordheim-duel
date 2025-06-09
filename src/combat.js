@@ -617,10 +617,16 @@ export const injuryPhase = function (attacker, defender, attack_group) {
 
         if (defender.wounds < 1) {
           const injury_rolls = rollDice(1 - defender.wounds)
+          let highest_injury_roll = Math.max(...injury_rolls)
+          if (attacker.skills.includes('strike to injure')) highest_injury_roll += 1
+          highest_injury_roll = attack.injury_bonus ? highest_injury_roll + attack.injury_bonus : highest_injury_roll
+
+          getInjury(highest_injury_roll, attack, defender)
+
           for (let injury_roll of injury_rolls) {
             if (attacker.skills.includes('strike to injure')) injury_roll += 1
             const injury = getInjury(attack.injury_bonus ? injury_roll + attack.injury_bonus : injury_roll, attack, defender)
-            if ((defender.status == "knocked down" || defender.status == "standing") || injury == "out of action") {
+            if (((defender.status == "knocked down" || defender.status == "standing") || injury == "out of action") && injury != "jumped up") {
               defender.status = injury
               attack.injury = injury
               attack.injury_roll = injury_roll
@@ -648,6 +654,8 @@ const getCrit = function (dice_roll) {
       return [true, 1, 0]
     case 3:
       return [true, 1, 2]
+    case 4:
+      return [true, 1, 2]
   }
   return [false, 0, 0]
 }
@@ -666,16 +674,19 @@ const getInjury = function (injury_roll, attack, defender) {
   injury_roll = attack.weapon?.tags.includes('concussion') && injury_roll == 2 ? 3 : injury_roll
 
   if (injury_roll == 1 || injury_roll == 2) {
-      return "knocked down"
+    if (defender.skills.includes('jump up')) {
+      return "jumped up"
+    }
+    return "knocked down"
   }
   if (injury_roll == 3 || injury_roll == 4) {
-      if (defender.armour.some((armour) => armour.tags.includes('avoid stun')) && rollDice(1)[0] >= 4) {
-        return "knocked down"
-      }
-      return "stunned"
+    if (defender.armour.some((armour) => armour.tags.includes('avoid stun')) && rollDice(1)[0] >= 4) {
+      return "knocked down"
+    }
+    return "stunned"
   }
   if (injury_roll >= 5) {
-      return "out of action"
+    return "out of action"
   }
   console.log("injury_roll: " + injury_roll + " is not valid")
   return "bugged"

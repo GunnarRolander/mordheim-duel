@@ -4,6 +4,7 @@ import { runSimulateCombat } from './combat.js';
 import WarriorComponent from './WarriorComponent.jsx';
 import { runTests } from './tests.js';
 import WinRateBar from './WinRateBar.jsx';
+import Accordion from './components/accordion.jsx';
 
 function App() {
   const [warrior1, setWarrior1] = useState()
@@ -84,6 +85,15 @@ function App() {
                 percentage2={winRates.win_rate_warrior_2 || 50}
                 rounds={winRates.final_rounds}
               />
+               <div>
+                  <h3>Simulation parameters</h3>
+                  <label>Number of simulations  </label>
+                  <input type="number" name="nrOfSimulations" value={nrOfSimulations} onChange={(e) => setNrOfSimulations(e.target.value)} min="0" max="1000000000" style={{ width: '7em' }} />
+                </div>
+                <br/>
+                <button onClick={() => runSimulation(nrOfSimulations)}>
+                  simulate combat
+                </button>
             </div>
             <div>
               <h2>Warrior 2</h2>
@@ -94,37 +104,30 @@ function App() {
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <h3>House Rules</h3>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <div style={{ textAlign: 'left'}}>
-              <label>Minus -1 to hit on offhand attack when dualwielding</label><br/>
-              <label>Minus -2 to hit on offhand attack when dualwielding</label><br/>
-              <label>Minus -1 to hit on all attacks when dualwielding</label><br/>
-              <label>Add WS to parry rolls</label><br/>
-              <label>Use original spear rules</label><br/>
-              <label>AP starts at S5</label><br/>
-              <label>No strengthbased AP</label><br/>
+          <Accordion title="House Rules">
+            <h3>House Rules</h3>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <div style={{ textAlign: 'left'}}>
+                <label>Minus -1 to hit on offhand attack when dualwielding</label><br/>
+                <label>Minus -2 to hit on offhand attack when dualwielding</label><br/>
+                <label>Minus -1 to hit on all attacks when dualwielding</label><br/>
+                <label>Add WS to parry rolls</label><br/>
+                <label>Use original spear rules</label><br/>
+                <label>AP starts at S5</label><br/>
+                <label>No strengthbased AP</label><br/>
+              </div>
+              <div>
+                <input type="checkbox" name="minus1ToHitOffhand" checked={houseRules.minus1ToHitOffhand} onChange={handleRuleChange} /><br/>
+                <input type="checkbox" name="minus2ToHitOffhand" checked={houseRules.minus2ToHitOffhand} onChange={handleRuleChange} /><br/>
+                <input type="checkbox" name="minusToHitDW" checked={houseRules.minusToHitDW} onChange={handleRuleChange} /><br/>
+                <input type="checkbox" name="addWSToParry" checked={houseRules.addWSToParry} onChange={handleRuleChange} /><br/>
+                <input type="checkbox" name="ogSpears" checked={houseRules.ogSpears} onChange={handleRuleChange} /><br/>
+                <input type="checkbox" name="ap5" checked={houseRules.ap5} onChange={handleRuleChange} /><br/>
+                <input type="checkbox" name="noStrengthBasedAP" checked={houseRules.noStrengthBasedAP} onChange={handleRuleChange} /><br/>
+              </div>
             </div>
-            <div>
-              <input type="checkbox" name="minus1ToHitOffhand" checked={houseRules.minus1ToHitOffhand} onChange={handleRuleChange} /><br/>
-              <input type="checkbox" name="minus2ToHitOffhand" checked={houseRules.minus2ToHitOffhand} onChange={handleRuleChange} /><br/>
-              <input type="checkbox" name="minusToHitDW" checked={houseRules.minusToHitDW} onChange={handleRuleChange} /><br/>
-              <input type="checkbox" name="addWSToParry" checked={houseRules.addWSToParry} onChange={handleRuleChange} /><br/>
-              <input type="checkbox" name="ogSpears" checked={houseRules.ogSpears} onChange={handleRuleChange} /><br/>
-              <input type="checkbox" name="ap5" checked={houseRules.ap5} onChange={handleRuleChange} /><br/>
-              <input type="checkbox" name="noStrengthBasedAP" checked={houseRules.noStrengthBasedAP} onChange={handleRuleChange} /><br/>
-            </div>
-          </div>
+          </Accordion>
         </div>
-        <div>
-          <h3>Simulation parameters</h3>
-          <label>Number of simulations  </label>
-          <input type="number" name="nrOfSimulations" value={nrOfSimulations} onChange={(e) => setNrOfSimulations(e.target.value)} min="0" max="1000000000" style={{ width: '7em' }} />
-        </div>
-        <br/>
-        <button onClick={() => runSimulation(nrOfSimulations)}>
-          simulate combat
-        </button>
         <br/>
         <br/>
         <br/>

@@ -59,7 +59,6 @@ export const runTests = () => {
   let first_warrior = {}
   let last_warrior = {};
 
-  /*
   // to Hit tests
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -516,7 +515,7 @@ export const runTests = () => {
   main_wound_ratio = result.main_wound_ratio
   console.log("S3 vs T3 1+ AS (no crits), average number of wounds:", main_wound_ratio)
   console.assert(main_wound_ratio === 0, "S3 vs T3, 1+ AS, average number of wounds is not 0")
-  */
+  
   // Test weapon initiative order
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -532,7 +531,7 @@ export const runTests = () => {
   warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
-  warrior_2.charged = true
+  warrior_2.charger = true
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
@@ -543,7 +542,7 @@ export const runTests = () => {
   warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['spear']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
-  warrior_2.charged = true
+  warrior_2.charger = true
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
@@ -560,7 +559,7 @@ export const runTests = () => {
   warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['spear']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
-  warrior_2.charged = true
+  warrior_2.charger = true
   warrior_1.initiative = 4
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -572,7 +571,7 @@ export const runTests = () => {
   warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['spear']]
   warrior_2.weapons_mainhand = [weapons['handweapon']]
-  warrior_2.charged = true
+  warrior_2.charger = true
   warrior_1.initiative = 2
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -590,7 +589,7 @@ export const runTests = () => {
   warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   warrior_2.weapons_mainhand = [weapons['great weapon']]
-  warrior_2.charged = true
+  warrior_2.charger = true
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
@@ -689,6 +688,143 @@ export const runTests = () => {
   console.log("A warrior with hand weapon and crossbow pistol should have a single attack second turn of combat", attacks)
   console.assert(attacks.length == 1, "warrior with hand weapon and crossbow pistol does not have a single attack second turn of combat")
   console.assert(attacks[0].weapon.name != 'crossbow pistol', "A warrior armed with a crossbow pistol should not have a pistol attack after first turn of combat")
+  //Skills
+  // test Strike to injure's injury bonus
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.skills = ['strike to injure']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testInjuryPhase(warrior_1, warrior_2, attacks, 0, 1)
+  knocked_ratio = result.knocked_ratio
+  stunned_ratio = result.stunned_ratio
+  ooa_ratio = result.ooa_ratio
+  console.log("1 unsaved wound with strike to injure, ratio of knocked down injuries:", knocked_ratio)
+  console.log("1 unsaved wound with strike to injure, ratio of stunned injuries:", stunned_ratio)
+  console.log("1 unsaved wound with strike to injure, ratio of out of action injuries:", ooa_ratio)
+  console.assert(knocked_ratio > 0.16 && knocked_ratio < 0.17, "1 unsaved wound with strike to injure, ratio of knocked down injuries is not 0.1666")
+  console.assert(stunned_ratio > 0.325 && stunned_ratio < 0.34, "1 unsaved wound with strike to injure, ratio of stunned injuries is not 0.33")
+  console.assert(ooa_ratio > 0.495 && ooa_ratio < 0.505, "1 unsaved wound with strike to injure, ratio of out of action injuries is not 0.5")
+  
+  // test web of steel's crit bonus
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.skills = ['web of steel']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, false)
+  crit_ratio = result.crit_ratio
+  crit_no_armour_ratio = result.crit_no_armour_ratio
+  crit_bonus_injury_ratio = result.crit_bonus_injury_ratio
+  console.log("S3 vs T1 (crits), average number of crits, with web of steel:", crit_ratio)
+  console.log("S3 vs T1 (crits), average number of crits with no armour save, with web of steel:", crit_no_armour_ratio)
+  console.log("S3 vs T1 (crits), average number of crits with bonus injury, with web of steel:", crit_bonus_injury_ratio)
+  console.assert(crit_ratio > 0.16 && crit_ratio < 0.17, "S3 vs T1, average number of crits is not 0.166")
+  console.assert(crit_no_armour_ratio > 0.16*5/6 && crit_no_armour_ratio < 0.17*5/6, "S3 vs T1, average number of crits with no armour save is not 0.166 * 5/6")
+  console.assert(crit_bonus_injury_ratio > 0.075 && crit_bonus_injury_ratio < 0.85, "S3 vs T1, average number of crits with bonus injury is not 0.166 * 3/6")
+  
+  //test step aside
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_2.skills = ['step aside']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, true)
+  main_wound_ratio = result.main_wound_ratio
+  console.log("S3 vs T3, average number of wounds with step aside:", main_wound_ratio)
+  console.assert(main_wound_ratio > 0.3275 && main_wound_ratio < 0.34, "S3 vs T3, step aside, average number of wounds is not 0.333")
+  //test mighty blow
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.skills = ['mighty blow']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, true)
+  main_wound_ratio = result.main_wound_ratio
+  console.log("S3 + mighty blow vs T3, average number of wounds:", main_wound_ratio)
+  console.assert(main_wound_ratio > 0.65 && main_wound_ratio < 0.675, "S3 + mighty blow vs T3, average number of wounds is not 0.666")
+   
+  //test resilient
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_2.skills = ['resilient']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, true)
+  main_wound_ratio = result.main_wound_ratio
+  console.log("S3 vs T3 + resilient, average number of wounds:", main_wound_ratio)
+  console.assert(main_wound_ratio > 0.3275 && main_wound_ratio < 0.34, "S3 + resilient vs T3, average number of wounds is not 0.333")
+  
+  // Strongman
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.weapons_mainhand = [weapons['handweapon']]
+  warrior_2.weapons_mainhand = [weapons['great weapon']]
+  warrior_2.charger = true
+  warrior_2.skills = ['strongman']
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
+  console.log("I3 warrior gets charged by I3 warrior with great weapon and strongman, should strike first 0% of time", result.first_warrior['warrior_1'] || 0)
+  console.assert((result.first_warrior['warrior_1'] || 0) == 0, "warrior_1 does not strike first 0% of time")
+
+  // Lightning reflexes
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.skills = ['lightning reflexes']
+  warrior_2.charger = true
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
+  console.log("I3 lightning reflexes gets charged by I3 warrior, should strike first 50% of time", result.first_warrior['warrior_1'])
+  console.assert(result.first_warrior['warrior_1']> 0.495 && result.first_warrior['warrior_1'] < 0.505, "lightning reflexes does not strike first 50% of time")
+  
+  attacks = setUpAttacks(warrior_1, warrior_2, 2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 2)
+  result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
+  console.log("I3 lightning reflexes fights I3 warrior in round 2, should strike first 50% of time", result.first_warrior['warrior_1'])
+  console.assert(result.first_warrior['warrior_1'] > 0.495 && result.first_warrior['warrior_1'] < 0.505, "lightning reflexes does not strike first 50% of time")
+  
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.skills = ['lightning reflexes']
+  warrior_2.weapons_mainhand = [weapons['handweapon']]
+  warrior_2.charger = true
+  warrior_1.initiative = 4
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
+  console.log("I4 lightning reflexes gets charged by I3 warrior, should strike first 100% of time", result.first_warrior['warrior_1'])
+  console.assert(result.first_warrior['warrior_1'] == 1, "lightning reflexes does not strike first 100% of time")
+  
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.skills = ['lightning reflexes']
+  warrior_2.weapons_mainhand = [weapons['handweapon']]
+  warrior_2.charger = true
+  warrior_1.initiative = 2
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
+  console.log("I2 lightning reflexes gets charged by I3 warrior, should strike first 0% of time", result.first_warrior['warrior_1'] || 0)
+  console.assert((result.first_warrior['warrior_1'] || 0) == 0, "lightning reflexes warrior with I2 does not strike first 0% of time")
+
+  // Jump up
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_2.skills = ['jump up']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testInjuryPhase(warrior_1, warrior_2, attacks, 0, 1)
+  knocked_ratio = result.knocked_ratio
+  stunned_ratio = result.stunned_ratio
+  ooa_ratio = result.ooa_ratio
+  console.log("1 unsaved wound with jump up, ratio of knocked down injuries:", knocked_ratio)
+  console.log("1 unsaved wound with jump up, ratio of stunned injuries:", stunned_ratio)
+  console.log("1 unsaved wound with jump up, ratio of out of action injuries:", ooa_ratio)
+  console.assert(knocked_ratio == 0, "1 unsaved wound with jump up, ratio of knocked down injuries is not 0")
+  console.assert(stunned_ratio > 0.325 && stunned_ratio < 0.34, "1 unsaved wound with jump up, ratio of stunned injuries is not 0.333")
+  console.assert(ooa_ratio > 0.325 && ooa_ratio < 0.34, "1 unsaved wound with jump up, ratio of out of action injuries is not 0.333")
 }
 
 const testToHitPhase = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {
