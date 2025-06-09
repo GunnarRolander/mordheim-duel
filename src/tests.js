@@ -17,7 +17,8 @@ export const runTests = () => {
     armour: [],
     armour_save: 7,
     charger: false,
-    stood_up: false
+    stood_up: false,
+    skills: [],
   }
 
   let warrior_2 = {
@@ -35,7 +36,8 @@ export const runTests = () => {
     armour: [],
     armour_save: 7,
     charger: false,
-    stood_up: false
+    stood_up: false,
+    skills: [],
   }
 
   let attack_group = []
@@ -798,7 +800,8 @@ const resetWarrior = (warrior) => {
     armour: [],
     armour_save: 7,
     charger: false,
-    stood_up: false
+    stood_up: false,
+    skills: [],
   }
   return warrior
 }
