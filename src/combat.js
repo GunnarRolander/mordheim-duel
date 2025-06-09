@@ -617,11 +617,6 @@ export const injuryPhase = function (attacker, defender, attack_group) {
 
         if (defender.wounds < 1) {
           const injury_rolls = rollDice(1 - defender.wounds)
-          let highest_injury_roll = Math.max(...injury_rolls)
-          if (attacker.skills.includes('strike to injure')) highest_injury_roll += 1
-          highest_injury_roll = attack.injury_bonus ? highest_injury_roll + attack.injury_bonus : highest_injury_roll
-
-          getInjury(highest_injury_roll, attack, defender)
 
           for (let injury_roll of injury_rolls) {
             if (attacker.skills.includes('strike to injure')) injury_roll += 1
