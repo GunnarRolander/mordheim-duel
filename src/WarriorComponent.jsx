@@ -163,7 +163,7 @@ const WarriorComponent = ({ handleWarriorChange }) => {
             {skills.filter((skill) => skill.category == 'combat').map(skill => (
                 <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`skill-${skill}`}>{skill.label}</label>
+                        <label htmlFor={`skill-${skill}`}>{skill.label}{skill.disabled && " (not implemented yet)"}</label>
                     </div>
                     <div>
                     <input
@@ -185,7 +185,7 @@ const WarriorComponent = ({ handleWarriorChange }) => {
             {skills.filter((skill) => skill.category == 'strength').map(skill => (
                 <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`skill-${skill}`}>{skill.label}</label>
+                        <label htmlFor={`skill-${skill}`}>{skill.label}{skill.disabled && " (not implemented yet)"}</label>
                     </div>
                     <div>
                     <input
@@ -207,7 +207,7 @@ const WarriorComponent = ({ handleWarriorChange }) => {
             {skills.filter((skill) => skill.category == 'speed').map(skill => (
                 <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`skill-${skill}`}>{skill.label}</label>
+                        <label htmlFor={`skill-${skill}`}>{skill.label}{skill.disabled && " (not implemented yet)"}</label>
                     </div>
                     <div>
                     <input
