@@ -175,18 +175,18 @@ export const setUpAttacks = function (attacker, defender, round_number) {
   return attacker
 }
 
-const setInitiativeOfAttacks = function (attack, warrior) {
+const setInitiativeOfAttacks = function (attack, warrior, round_number) {
   let initiative = attack.initiative
   initiative += attack.weapon.init_mod ? attack.weapon.init_mod : 0
 
   
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
-  if (attack.weapon.tags.includes('strike first') || warrior.charger || warrior.skills.includes('lightning reflexes')) {
+  if ((attack.weapon.tags.includes('strike first') || warrior.charger || warrior.skills.includes('lightning reflexes')) && round_number == 1) {
     initiative = 99 + warrior.initiative * 0.1
   }
 
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
-  if (attack.weapon.tags.includes('shoot_hth')) {
+  if (attack.weapon.tags.includes('shoot_hth') && round_number == 1) {
     initiative = 199 + warrior.initiative * 0.1
   }
 
@@ -204,7 +204,7 @@ const setInitiativeOfAttacks = function (attack, warrior) {
   return initiative
 }
 
-export const orderAttacksByInitiative = function (attacker, defender) {
+export const orderAttacksByInitiative = function (attacker, defender, round_number) {
   const tie_rolls = {}
 
   //consolidate the attack slots into a single array
@@ -215,8 +215,8 @@ export const orderAttacksByInitiative = function (attacker, defender) {
     const warrior_b = b.source === attacker.name ? attacker : defender
 
     // Add initiative modifiers from the weapon, if available
-    const initiative_a = setInitiativeOfAttacks(a, warrior_a)
-    const initiative_b = setInitiativeOfAttacks(b, warrior_b)
+    const initiative_a = setInitiativeOfAttacks(a, warrior_a, round_number)
+    const initiative_b = setInitiativeOfAttacks(b, warrior_b, round_number)
 
     if (initiative_a === initiative_b) {
       // If the initiative is the same, check if the source is the same
@@ -277,7 +277,7 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
     warrior_1 = setUpAttacks(warrior_1, warrior_2, round_number)
     warrior_2 = setUpAttacks(warrior_2, warrior_1, round_number)
     
-    const grouped_attacks = orderAttacksByInitiative(warrior_1, warrior_2)
+    const grouped_attacks = orderAttacksByInitiative(warrior_1, warrior_2, round_number)
     
     for (const attack_group of grouped_attacks) {
       const attacker = attack_group[0].source === warrior_1.name ? warrior_1 : warrior_2
