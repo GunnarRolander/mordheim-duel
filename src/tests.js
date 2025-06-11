@@ -690,6 +690,7 @@ export const runTests = () => {
   console.log("A warrior with hand weapon and crossbow pistol should have a single attack second turn of combat", attacks)
   console.assert(attacks.length == 1, "warrior with hand weapon and crossbow pistol does not have a single attack second turn of combat")
   console.assert(attacks[0].weapon.name != 'crossbow pistol', "A warrior armed with a crossbow pistol should not have a pistol attack after first turn of combat")
+
   //Skills
   // test Strike to injure's injury bonus
   warrior_1 = resetWarrior(warrior_1)
@@ -707,6 +708,22 @@ export const runTests = () => {
   console.assert(knocked_ratio > 0.16 && knocked_ratio < 0.17, "1 unsaved wound with strike to injure, ratio of knocked down injuries is not 0.1666")
   console.assert(stunned_ratio > 0.325 && stunned_ratio < 0.34, "1 unsaved wound with strike to injure, ratio of stunned injuries is not 0.33")
   console.assert(ooa_ratio > 0.495 && ooa_ratio < 0.505, "1 unsaved wound with strike to injure, ratio of out of action injuries is not 0.5")
+
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.skills = ['strike to injure']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testInjuryPhase(warrior_1, warrior_2, attacks, 1, 1)
+  knocked_ratio = result.knocked_ratio
+  stunned_ratio = result.stunned_ratio
+  ooa_ratio = result.ooa_ratio
+  console.log("1 unsaved wound with strike to injure and injury_bonus +1, ratio of knocked down injuries:", knocked_ratio)
+  console.log("1 unsaved wound with strike to injure and injury_bonus +1, ratio of stunned injuries:", stunned_ratio)
+  console.log("1 unsaved wound with strike to injure and injury_bonus +1, ratio of out of action injuries:", ooa_ratio)
+  console.assert(knocked_ratio == 0, "1 unsaved wound with strike to injure and injury_bonus +1, ratio of knocked down injuries is not 0")
+  console.assert(stunned_ratio > 0.325 && stunned_ratio < 0.34, "1 unsaved wound with strike to injure and injury_bonus +1, ratio of stunned injuries is not 0.33")
+  console.assert(ooa_ratio > 0.655 && ooa_ratio < 0.675, "1 unsaved wound with strike to injure and injury_bonus +1, ratio of out of action injuries is not 0.666")
   
   // test web of steel's crit bonus
   warrior_1 = resetWarrior(warrior_1)
@@ -827,6 +844,77 @@ export const runTests = () => {
   console.assert(knocked_ratio == 0, "1 unsaved wound with jump up, ratio of knocked down injuries is not 0")
   console.assert(stunned_ratio > 0.325 && stunned_ratio < 0.34, "1 unsaved wound with jump up, ratio of stunned injuries is not 0.333")
   console.assert(ooa_ratio > 0.325 && ooa_ratio < 0.34, "1 unsaved wound with jump up, ratio of out of action injuries is not 0.333")
+
+  // Test entire combat round
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.charger = true
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  testEntireCombatRound(warrior_1, warrior_2, attacks, 1)
+
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.charger = true
+  warrior_1.skills = ['strike to injure']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  testEntireCombatRound(warrior_1, warrior_2, attacks, 1)
+
+  // Test Frenzy
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.tags = ['frenzy']
+  warrior_1.frenzy = true
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  console.log("Frenzy should double the number of attacks", attacks.length)
+  console.assert(attacks.length == 2, "Frenzy does not double the number of attacks")
+
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.tags = ['frenzy']
+  warrior_1.frenzy = true
+  setUpAttacks(warrior_1, warrior_2).attack_slots
+  attacks = [setUpAttacks(warrior_2, warrior_1, 1)]
+  attacks = attacks.map((attack) => ({ ...attack, unsaved_wounds: 1 }))
+  attacks = injuryPhase(warrior_2, warrior_1, attacks);
+  console.log("Warrior with frenzy should lose frenzy after getting knocked/stunned/ooa. Frenzy: ", warrior_1.frenzy)
+  console.assert(!warrior_1.frenzy, "Warrior with frenzy does not lose frenzy after getting knocked/stunned/ooa")
+
+  // Test Hatred
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.tags = ['hatred']
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testToHitPhase(warrior_1, warrior_2, attacks)
+  main_hit_ratio = result.main_hit_ratio
+  console.log("Hatred should increase the number of hits from 0.5 to 0.75", main_hit_ratio)
+  console.assert(main_hit_ratio > 0.745 && main_hit_ratio < 0.755, "Hatred does not increase the number of hits from 0.5 to 0.75")
+
+  // Test Expert Swordsman
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.weapons_mainhand = [weapons['sword']]
+  warrior_1.skills = ['expert swordsman']
+  warrior_1.charger = true
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testToHitPhase(warrior_1, warrior_2, attacks)
+  main_hit_ratio = result.main_hit_ratio
+  console.log("Hatred should increase the number of hits from 0.5 to 0.75", main_hit_ratio)
+  console.assert(main_hit_ratio > 0.745 && main_hit_ratio < 0.755, "Hatred does not increase the number of hits from 0.5 to 0.75")
+
+  // Test Unstoppable Charge
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.skills = ['unstoppable charge']
+  warrior_1.charger = true
+  attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
+  const ws_diff = attacks[0].ws - warrior_1.ws
+  console.log("Unstoppable charge should increase the WS of attacks when charging by 1, WS diff:", ws_diff)
+  console.assert(ws_diff == 1, "Unstoppable charge does not increase the WS of attacks when charging by 1")
 }
 
 const testToHitPhase = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {
@@ -890,8 +978,52 @@ const testInjuryPhase = (warrior_1_base, warrior_2_base, attack_group_base, inju
     stunned_ratio: stunned / number_of_simulations,
     ooa_ratio: ooa / number_of_simulations
   }
-
 }
+
+const testEntireCombatRound = (warrior_1_base, warrior_2_base, attack_group_base, round_number, number_of_simulations=100000) => {
+  let knocked = 0
+  let stunned = 0
+  let ooa = 0
+  let total_wounding_hits = 0;
+  let total_unsaved_wounds = 0;
+  let total_crits = 0;
+  let total_crit_no_armour = 0;
+  let total_crit_bonus_injury = 0;
+  let total_hits = 0;
+
+  for (let i = 0; i < number_of_simulations; i++) {
+    const warrior1 = JSON.parse(JSON.stringify(warrior_1_base))
+    const warrior2 = JSON.parse(JSON.stringify(warrior_2_base))
+    let attack_group = JSON.parse(JSON.stringify(attack_group_base))
+    attack_group = toHitPhase(warrior1, warrior2, attack_group);
+    const hits = attack_group.filter((attack) => attack.hit).length
+    total_hits += hits
+    attack_group = toWoundPhase(warrior1, warrior2, attack_group, round_number == 1, false);
+    total_unsaved_wounds += attack_group.reduce((sum, attack) => sum + (attack.unsaved_wounds || 0), 0)
+    total_wounding_hits += attack_group.filter((attack) => attack.wounded).length
+    total_crits += attack_group.filter((attack) => attack.crit).length
+    total_crit_no_armour += attack_group.filter((attack) => attack.no_armour_save).length
+    total_crit_bonus_injury += attack_group.filter((attack) => attack.injury_bonus).length
+    attack_group = injuryPhase(warrior1, warrior2, attack_group);
+    if (warrior2.status === "knocked down") knocked += 1
+    if (warrior2.status === "stunned") stunned += 1
+    if (warrior2.status === "out of action") ooa += 1
+  }
+
+  console.log({knocked, ooa, stunned, total_wounding_hits, total_unsaved_wounds, total_crits, total_crit_no_armour, total_crit_bonus_injury, total_hits})
+  return {
+    knocked_ratio: knocked / number_of_simulations,
+    stunned_ratio: stunned / number_of_simulations,
+    ooa_ratio: ooa / number_of_simulations,
+    total_wounding_hits: total_wounding_hits / number_of_simulations,
+    total_unsaved_wounds: total_unsaved_wounds / number_of_simulations,
+    total_crits: total_crits / number_of_simulations,
+    total_crit_no_armour: total_crit_no_armour / number_of_simulations,
+    total_crit_bonus_injury: total_crit_bonus_injury / number_of_simulations,
+    main_hit_ratio: total_hits / number_of_simulations
+  }
+}
+
 const testDoRecovery = (warrior_base, status, your_turn) => {
   warrior_base.status = status
   doRecovery(warrior_base, your_turn)

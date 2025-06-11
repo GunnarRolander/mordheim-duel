@@ -231,3 +231,31 @@ export const skills = [
     }
 ]
 
+export const psychology = [
+    {
+        name: 'fear',
+        label: 'Fear',
+        tags: [],
+        category: 'psychology',
+        disabled: true
+    },
+    {
+        name: 'frenzy',
+        label: 'Frenzy',
+        tags: [],
+        category: 'psychology'
+    },
+    {
+        name: 'hatred',
+        label: 'Hatred',
+        tags: [],
+        category: 'psychology'
+    },
+    {
+        name: 'stupidity',
+        label: 'Stupidity',
+        tags: [],
+        category: 'psychology'
+    }
+]
+

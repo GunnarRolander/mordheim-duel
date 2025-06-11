@@ -128,16 +128,13 @@ function App() {
             </div>
           </Accordion>
         </div>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <br/>
-        <button onClick={() => runUnitTests()}>
-          run unit tests
-        </button>
-        <p>Open the console to see the test results (F12 or ctrl + shift + i)</p>
+        <Accordion title="Unit Tests">
+          <br/>
+          <button onClick={() => runUnitTests()}>
+            run unit tests
+          </button>
+          <p>Open the console to see the test results (F12 or ctrl + shift + i)</p>
+        </Accordion>
       </div>
     </>
   )

@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
-import { weapons, armour, ranged_weapons, skills } from './equipment.js';
+import { weapons, armour, ranged_weapons, skills, psychology } from './equipment.js';
 import ArmourComponent from './ArmourComponent.jsx';
 import Accordion from './components/accordion.jsx';
 
@@ -8,7 +8,10 @@ const WarriorComponent = ({ handleWarriorChange }) => {
     const taglist = [
         {label: 'Possessed', name: 'possessed'},
         {label:'Undead', name: 'undead'},
-        {label:'Hatred', name: 'hatred'}
+        {label:'Hatred', name: 'hatred'},
+        {label:'Fear', name: 'fear', disabled: true},
+        {label:'Frenzy', name: 'frenzy'},
+        {label:'Stupidity', name: 'stupidity'},
     ];
 
     const [formData, setFormData] = useState({
@@ -153,6 +156,7 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                         onChange={handleTagChange}
                         id={`tag-${tag.name}`}
                         style={{ float: 'right' }}
+                        disabled ={tag.disabled || false}
                     />
                     </div>
                 </div>
@@ -219,6 +223,28 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                         id={`skill-${skill.name}`}
                         style={{ float: 'right' }}
                         disabled ={skill.disabled || false} // Disable skill if specified
+                    />
+                    </div>
+                </div>
+            ))}
+        </Accordion>
+        <Accordion
+            title="Psychology"
+        >
+            {psychology.map(tag => (
+                <div key={tag.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <div style={{ textAlign: 'left'}}>
+                        <label htmlFor={`tag-${tag}`}>{tag.label}{tag.disabled && " (not implemented yet)"}</label>
+                    </div>
+                    <div>
+                    <input
+                        type="checkbox"
+                        name={tag.name}
+                        checked={formData.tags.includes(tag.name)}
+                        onChange={handleTagChange}
+                        id={`tag-${tag.name}`}
+                        style={{ float: 'right' }}
+                        disabled ={tag.disabled || false}
                     />
                     </div>
                 </div>

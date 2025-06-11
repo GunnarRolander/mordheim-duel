@@ -92,6 +92,10 @@ export const setUpAttacks = function (attacker, defender, round_number) {
     ws += 1
   }
 
+  if (attacker.frenzy) {
+    nbr_attacks = nbr_attacks * 2 // Frenzy doubles the number of attacks
+  }
+
   attacker.attack_slots = []
   const mainhand_pistol = attacker.weapons_mainhand.filter((weapon) => weapon.tags.includes('pistol'))[0]
   const offhand_pistol = attacker.weapons_offhand.filter((weapon) => weapon.tags.includes('pistol'))[0]
@@ -318,7 +322,7 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
 }
 
 const fightCombatRound = function (attacker, defender, attack_group, first_round, house_rules) {
-  if (attacker.status != "standing") {
+  if (attacker.status != "standing" || (attacker.stupid && !attacker.frenzy)) {
     for (const attack of attack_group) {
       attack.result = "Attacker is not standing, skipping attack"
       if (debug) console.log(attacker.name + " is not standing, skipping attack")
@@ -354,6 +358,7 @@ const createWarriorFromForm = function (name, formData) {
     attacks: parseInt(formData.A),
     wounds: parseInt(formData.W),
     initiative: parseInt(formData.I),
+    leadership: parseInt(formData.LD),
     status: "standing",
     weapons_mainhand: equipped_weapons,
     weapons_offhand: equipped_weapons_offhand,
@@ -363,7 +368,8 @@ const createWarriorFromForm = function (name, formData) {
     charger: formData.charger,
     stood_up: false,
     tags: formData.tags,
-    skills: formData.skills
+    skills: formData.skills,
+    frenzy: formData.tags.includes('frenzy'),
   }
 
   return warrior
@@ -462,41 +468,6 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
     if (!attack.hit && attack.reroll_misses) {
       rollToHit(attack, defender, house_rules)
     }
-    /*
-    const weapon = attack.weapon
-    const offhand = attack.offHand
-    if (defender.old_status == "knocked down" || defender.old_status == "stunned") {
-      attack.to_hit_roll = ['auto hit']
-      attack.hit = true
-      if (debug) console.log("defender " + defender.old_status + ", auto hit", attack)
-    } else {
-      attack.to_hit_roll = rollDice(1)[0]
-      attack.to_hit_roll += weapon.hit_mod ? weapon.hit_mod : 0 
-
-      if (attack.to_hit_roll == 6 && weapon.tags.includes('poisoned')) {
-        attack.poison_proc = true
-      }
-      
-      // Apply offhand house rules, if active
-      if (offhand && minusToHitOffhand > 0) {
-        attack.to_hit_roll = attack.to_hit_roll - minusToHitOffhand
-      }
-      // If double weapon house rule is active, subtract 1 from all to hit roll
-      if (minusToHitDW && attacker.weapons.length > 1) {
-        attack.to_hit_roll = attack.to_hit_roll - 1
-      }
-      
-      if (attack.weapon.tags.includes('shoot_hth')) {
-        // If the weapon is a shoot in HtH weapon, use BS to hit  
-        attack.hit = attack.to_hit_roll >= toHitRanged(attack.bs)
-      } else {
-        // Check if the to hit roll is higher than the target to hit value
-        attack.hit = attack.to_hit_roll >= toHit(attack.ws, defender.ws)
-      }
-      if (!attack.hit) {
-        attack.result = "Missed"
-      }
-    }*/
   }
 
   // Check if opponent has parry equipment
@@ -678,11 +649,13 @@ export const injuryPhase = function (attacker, defender, attack_group) {
 
           for (let injury_roll of injury_rolls) {
             if (attacker.skills.includes('strike to injure')) injury_roll += 1
-            const injury = getInjury(attack.injury_bonus ? injury_roll + attack.injury_bonus : injury_roll, attack, defender)
+            injury_roll = attack.injury_bonus ? injury_roll + attack.injury_bonus : injury_roll
+            const injury = getInjury(injury_roll, attack, defender)
             if (((defender.status == "knocked down" || defender.status == "standing") || injury == "out of action") && injury != "jumped up") {
               defender.status = injury
               attack.injury = injury
               attack.injury_roll = injury_roll
+              defender.frenzy = false
             }
           }
           defender.wounds = 1 // 1 is the lowest, every wound below it becomes a injury roll
@@ -747,6 +720,7 @@ const getInjury = function (injury_roll, attack, defender) {
 
 export const doRecovery = function (warrior, your_turn) {
   warrior.stood_up = false
+  warrior.stupid = false // Reset stupidity for the next turn
   // Recovery phase, stunned goes to knocked down, knocked down goes to standing
   if (warrior.status == "knocked down" && your_turn) {
       warrior.status = "standing"
@@ -757,4 +731,8 @@ export const doRecovery = function (warrior, your_turn) {
   }
   warrior.old_status = warrior.status
   warrior.crit_this_turn = false
+
+  if (warrior.tags.includes('stupidity')) {
+    warrior.stupid = rollDice(2).reduce((acc, val) => acc + val, 0) <= warrior.leadership
+  }
 }
