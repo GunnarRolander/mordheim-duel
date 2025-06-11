@@ -706,7 +706,7 @@ const getInjury = function (injury_roll, attack, defender) {
     return "knocked down"
   }
   if (injury_roll == 3 || injury_roll == 4) {
-    if (defender.armour.some((armour) => armour.tags.includes('avoid stun')) && rollDice(1)[0] >= 4) {
+    if ((defender.armour.some((armour) => armour.tags.includes('avoid stun')) && rollDice(1)[0] >= 4) || defender.tags.includes('no pain')) {
       return "knocked down"
     }
     return "stunned"

@@ -259,3 +259,28 @@ export const psychology = [
     }
 ]
 
+export const abilities = [
+    {
+        name: 'no pain',
+        label: 'No Pain',
+        tags: [],
+    },
+    {
+        name: 'immune to poison',
+        label: 'Immune to Poison',
+        tags: [],
+    },
+    {
+        name: 'hard to kill',
+        label: 'Hard to Kill',
+        tags: [],
+        disabled: true
+    },
+    {
+        name: 'hard head',
+        label: 'Hard Head',
+        tags: [],
+        disabled: true
+    }
+]
+
