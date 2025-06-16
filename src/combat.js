@@ -86,7 +86,7 @@ export const setUpAttacks = function (attacker, defender, round_number) {
   let nbr_attacks = attacker.attacks
   let ws = attacker.ws
 
-  if (attacker.skills.includes('pit fighter')) {
+  if (attacker.tags.includes('pit fighter')) {
     // If the attacker has the pit fighter skill, they get +1 attack and +1 WS
     nbr_attacks += 1
     ws += 1
@@ -177,11 +177,11 @@ export const setUpAttacks = function (attacker, defender, round_number) {
     }
 
     for (const attack of attacker.attack_slots) {
-      if ((attacker.skills.includes('expert swordsman') && attacker.charger && attack.weapon.tags.includes('sword')) || attacker.tags.includes('hatred')) {
+      if ((attacker.tags.includes('expert swordsman') && attacker.charger && attack.weapon.tags.includes('sword')) || attacker.tags.includes('hatred')) {
         // If the attacker has the expert swordsman skill, they get +1 WS and +1 initiative for sword attacks
         attack.reroll_misses = true
       }
-      if (attacker.skills.includes('unstoppable charge') && attacker.charger) {
+      if (attacker.tags.includes('unstoppable charge') && attacker.charger) {
         attack.ws += 1
       }
     }
@@ -196,7 +196,7 @@ const setInitiativeOfAttacks = function (attack, warrior, round_number) {
 
   
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
-  if ((attack.weapon.tags.includes('strike first') || warrior.charger || warrior.skills.includes('lightning reflexes')) && round_number == 1) {
+  if ((attack.weapon.tags.includes('strike first') || warrior.charger || warrior.tags.includes('lightning reflexes')) && round_number == 1) {
     initiative = 99 + warrior.initiative * 0.1
   }
 
@@ -206,7 +206,7 @@ const setInitiativeOfAttacks = function (attack, warrior, round_number) {
   }
 
   // If the weapon of an attack has a tag that indicates it should strike last, set the initiative to -1
-  if (attack.weapon.tags.includes('strike last') && !warrior.skills.includes('strongman')) {
+  if (attack.weapon.tags.includes('strike last') && !warrior.tags.includes('strongman')) {
     initiative = -1
   }
 
@@ -389,7 +389,6 @@ const createWarriorFromForm = function (name, formData) {
     charger: formData.charger,
     stood_up: false,
     tags: formData.tags,
-    skills: formData.skills,
     frenzy: formData.tags.includes('frenzy'),
     feared: false,
   }
@@ -583,14 +582,14 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
     }
     
     // Handle Mighty Blow skill
-    if (attacker.skills.includes('mighty blow') && attack.weapon.name.substring(attack.weapon.name.length-6) != 'pistol') {
+    if (attacker.tags.includes('mighty blow') && attack.weapon.name.substring(attack.weapon.name.length-6) != 'pistol') {
       strength += 1
     }
 
     const ap_strength = strength
 
     // Handle Resilient skill
-    if (defender.skills.includes('resilient')) {
+    if (defender.tags.includes('resilient')) {
       strength += -1
     }
 
@@ -615,7 +614,7 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
     if (attack.crit) {
       attacker.crit_this_turn = true
       let crit_roll = rollDice(1)[0]
-      if (attacker.skills.includes('web of steel')) crit_roll += 1
+      if (attacker.tags.includes('web of steel')) crit_roll += 1
       const [no_armour_save, extra_wounds, injury_bonus] = getCrit(crit_roll)
       attack.no_armour_save = no_armour_save
       attack.wounds_caused = attack.wounds_caused + extra_wounds
@@ -634,7 +633,7 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
       }
     }
 
-    if (defender.skills.includes('step aside') ) {
+    if (defender.tags.includes('step aside') ) {
       // Roll Step Aside
       attack.step_aside_roll = rollDice(1)[0]
       // Check if the step aside roll is higher or equal to 5+
@@ -673,7 +672,7 @@ export const injuryPhase = function (attacker, defender, attack_group) {
           const injury_rolls = rollDice(1 - defender.wounds)
 
           for (let injury_roll of injury_rolls) {
-            if (attacker.skills.includes('strike to injure')) injury_roll += 1
+            if (attacker.tags.includes('strike to injure')) injury_roll += 1
             injury_roll = attack.injury_bonus ? injury_roll + attack.injury_bonus : injury_roll
             const injury = getInjury(injury_roll, attack, defender)
             if (((defender.status == "knocked down" || defender.status == "standing") || injury == "out of action") && injury != "jumped up") {
@@ -725,7 +724,7 @@ const getInjury = function (injury_roll, attack, defender) {
   injury_roll = attack.weapon?.tags.includes('concussion') && !defender.tags.includes('hard head') && injury_roll == 2 ? 3 : injury_roll
 
   if (injury_roll == 1 || injury_roll == 2) {
-    if (defender.skills.includes('jump up')) {
+    if (defender.tags.includes('jump up')) {
       return "jumped up"
     }
     return "knocked down"

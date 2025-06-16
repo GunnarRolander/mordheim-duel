@@ -19,7 +19,6 @@ export const runTests = () => {
     armour_save: 7,
     charger: false,
     stood_up: false,
-    skills: [],
     tags: [],
   }
 
@@ -40,7 +39,6 @@ export const runTests = () => {
     armour_save: 7,
     charger: false,
     stood_up: false,
-    skills: [],
     tags: [],
   }
 
@@ -697,7 +695,7 @@ export const runTests = () => {
   // test Strike to injure's injury bonus
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_1.skills = ['strike to injure']
+  warrior_1.tags = ['strike to injure']
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testInjuryPhase(warrior_1, warrior_2, attacks, 0, 1)
@@ -713,7 +711,7 @@ export const runTests = () => {
 
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_1.skills = ['strike to injure']
+  warrior_1.tags = ['strike to injure']
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testInjuryPhase(warrior_1, warrior_2, attacks, 1, 1)
@@ -730,7 +728,7 @@ export const runTests = () => {
   // test web of steel's crit bonus
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_1.skills = ['web of steel']
+  warrior_1.tags = ['web of steel']
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, false)
@@ -747,7 +745,7 @@ export const runTests = () => {
   //test step aside
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_2.skills = ['step aside']
+  warrior_2.tags = ['step aside']
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, true)
@@ -757,7 +755,7 @@ export const runTests = () => {
   //test mighty blow
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_1.skills = ['mighty blow']
+  warrior_1.tags = ['mighty blow']
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, true)
@@ -768,7 +766,7 @@ export const runTests = () => {
   //test resilient
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_2.skills = ['resilient']
+  warrior_2.tags = ['resilient']
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, true)
@@ -782,7 +780,7 @@ export const runTests = () => {
   warrior_1.weapons_mainhand = [weapons['handweapon']]
   warrior_2.weapons_mainhand = [weapons['great weapon']]
   warrior_2.charger = true
-  warrior_2.skills = ['strongman']
+  warrior_2.tags = ['strongman']
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testOrderAttacksByInitiative(warrior_1, warrior_2, 1)
@@ -792,7 +790,7 @@ export const runTests = () => {
   // Lightning reflexes
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_1.skills = ['lightning reflexes']
+  warrior_1.tags = ['lightning reflexes']
   warrior_2.charger = true
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -808,7 +806,7 @@ export const runTests = () => {
   
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_1.skills = ['lightning reflexes']
+  warrior_1.tags = ['lightning reflexes']
   warrior_2.weapons_mainhand = [weapons['handweapon']]
   warrior_2.charger = true
   warrior_1.initiative = 4
@@ -820,7 +818,7 @@ export const runTests = () => {
   
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_1.skills = ['lightning reflexes']
+  warrior_1.tags = ['lightning reflexes']
   warrior_2.weapons_mainhand = [weapons['handweapon']]
   warrior_2.charger = true
   warrior_1.initiative = 2
@@ -833,7 +831,7 @@ export const runTests = () => {
   // Jump up
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_2.skills = ['jump up']
+  warrior_2.tags = ['jump up']
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   result = testInjuryPhase(warrior_1, warrior_2, attacks, 0, 1)
@@ -858,7 +856,7 @@ export const runTests = () => {
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
   warrior_1.charger = true
-  warrior_1.skills = ['strike to injure']
+  warrior_1.tags = ['strike to injure']
   attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
   testEntireCombatRound(warrior_1, warrior_2, attacks, 1)
@@ -899,7 +897,7 @@ export const runTests = () => {
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
   warrior_1.weapons_mainhand = [weapons['sword']]
-  warrior_1.skills = ['expert swordsman']
+  warrior_1.tags = ['expert swordsman']
   warrior_1.charger = true
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   setUpAttacks(warrior_2, warrior_1, 1)
@@ -911,7 +909,7 @@ export const runTests = () => {
   // Test Unstoppable Charge
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
-  warrior_1.skills = ['unstoppable charge']
+  warrior_1.tags = ['unstoppable charge']
   warrior_1.charger = true
   attacks = setUpAttacks(warrior_1, warrior_2, 1).attack_slots
   const ws_diff = attacks[0].ws - warrior_1.ws
@@ -1172,7 +1170,6 @@ const resetWarrior = (warrior) => {
     armour_save: 7,
     charger: false,
     stood_up: false,
-    skills: [],
     tags: [],
   }
   return warrior
