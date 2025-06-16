@@ -5,11 +5,6 @@ import ArmourComponent from './ArmourComponent.jsx';
 import Accordion from './components/accordion.jsx';
 
 const WarriorComponent = ({ handleWarriorChange }) => {
-    const taglist = [
-        {label: 'Possessed', name: 'possessed'},
-        {label:'Undead', name: 'undead'}
-    ];
-
     const [formData, setFormData] = useState({
         WS: 3,
         BS: 3,
@@ -137,28 +132,6 @@ const WarriorComponent = ({ handleWarriorChange }) => {
             </div>
         </div>
         <Accordion
-            title="Tags"
-        >
-            {taglist.map(tag => (
-                <div key={tag.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`tag-${tag}`}>{tag.label}</label>
-                    </div>
-                    <div>
-                    <input
-                        type="checkbox"
-                        name={tag.name}
-                        checked={formData.tags.includes(tag.name)}
-                        onChange={handleTagChange}
-                        id={`tag-${tag.name}`}
-                        style={{ float: 'right' }}
-                        disabled ={tag.disabled || false}
-                    />
-                    </div>
-                </div>
-            ))}
-        </Accordion>
-        <Accordion
             title="Combat skills"
         >
             {skills.filter((skill) => skill.category == 'combat').map(skill => (
@@ -247,7 +220,7 @@ const WarriorComponent = ({ handleWarriorChange }) => {
             ))}
         </Accordion>
         <Accordion
-            title="Abilities"
+            title="Abilities/Attributes"
         >
             {abilities.map(tag => (
                 <div key={tag.name} style={{ display: 'flex', justifyContent: 'space-between' }}>

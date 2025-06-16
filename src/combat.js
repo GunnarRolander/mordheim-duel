@@ -427,7 +427,7 @@ const rollToHit = function (attack, defender, house_rules={
     attack.to_hit_roll = rollDice(1)[0]
     attack.to_hit_roll += weapon.hit_mod ? weapon.hit_mod : 0 
 
-    if (attack.to_hit_roll == 6 && weapon.tags.includes('poisoned')) {
+    if (attack.to_hit_roll == 6 && weapon.tags.includes('poisoned') && !defender.tags.includes('immune to poison')) {
       attack.poison_proc = true
     }
     
@@ -697,7 +697,7 @@ const modifyArmourSave = function (attacker_strength, weapon_ap = 0, armour_save
 }
 
 const getInjury = function (injury_roll, attack, defender) {
-  injury_roll = attack.weapon?.tags.includes('concussion') && injury_roll == 2 ? 3 : injury_roll
+  injury_roll = attack.weapon?.tags.includes('concussion') && !defender.tags.includes('hard head') && injury_roll == 2 ? 3 : injury_roll
 
   if (injury_roll == 1 || injury_roll == 2) {
     if (defender.skills.includes('jump up')) {
@@ -705,7 +705,7 @@ const getInjury = function (injury_roll, attack, defender) {
     }
     return "knocked down"
   }
-  if (injury_roll == 3 || injury_roll == 4) {
+  if (injury_roll == 3 || injury_roll == 4 || (defender.tags.includes('hard to kill') && injury_roll == 5)) {
     if ((defender.armour.some((armour) => armour.tags.includes('avoid stun')) && rollDice(1)[0] >= 4) || defender.tags.includes('no pain')) {
       return "knocked down"
     }

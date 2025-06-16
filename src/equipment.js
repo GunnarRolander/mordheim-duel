@@ -262,7 +262,7 @@ export const psychology = [
 export const abilities = [
     {
         name: 'no pain',
-        label: 'No Pain',
+        label: 'No Pain (Undead)',
         tags: [],
     },
     {
@@ -272,15 +272,18 @@ export const abilities = [
     },
     {
         name: 'hard to kill',
-        label: 'Hard to Kill',
-        tags: [],
-        disabled: true
+        label: 'Hard to Kill (Dwarf)',
+        tags: []
     },
     {
         name: 'hard head',
-        label: 'Hard Head',
-        tags: [],
-        disabled: true
+        label: 'Hard Head (Dwarf)',
+        tags: []
+    },
+    {
+        label: 'Susceptible to Sigmarite Hammers/holy weapons',
+        name: 'possessed',
+        tags: []
     }
 ]
 

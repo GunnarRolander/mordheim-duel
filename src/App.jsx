@@ -64,6 +64,7 @@ function App() {
 
   return (
     <>
+    <h1>MathHeim Duelling Simulator</h1>
       <div className="card">
         {spinnerVisible && (
           <div className="spinner" style={{ textAlign: 'center', margin: '1em' }}>
@@ -105,7 +106,6 @@ function App() {
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <Accordion title="House Rules">
-            <h3>House Rules</h3>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <div style={{ textAlign: 'left'}}>
                 <label>Minus -1 to hit on offhand attack when dualwielding</label><br/>
@@ -129,11 +129,10 @@ function App() {
           </Accordion>
         </div>
         <Accordion title="Unit Tests">
-          <br/>
+          <p>Open the console to see the test results (F12 or ctrl + shift + i)</p>
           <button onClick={() => runUnitTests()}>
             run unit tests
           </button>
-          <p>Open the console to see the test results (F12 or ctrl + shift + i)</p>
         </Accordion>
       </div>
     </>

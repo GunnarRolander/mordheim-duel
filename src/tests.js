@@ -915,6 +915,40 @@ export const runTests = () => {
   const ws_diff = attacks[0].ws - warrior_1.ws
   console.log("Unstoppable charge should increase the WS of attacks when charging by 1, WS diff:", ws_diff)
   console.assert(ws_diff == 1, "Unstoppable charge does not increase the WS of attacks when charging by 1")
+
+  // Hard to kill
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_2.tags = ['hard to kill']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testInjuryPhase(warrior_1, warrior_2, attacks, 0, 1)
+  knocked_ratio = result.knocked_ratio
+  stunned_ratio = result.stunned_ratio
+  ooa_ratio = result.ooa_ratio
+  console.log("1 unsaved wound with hard to kill, ratio of knocked down injuries:", knocked_ratio)
+  console.log("1 unsaved wound with hard to kill, ratio of stunned injuries:", stunned_ratio)
+  console.log("1 unsaved wound with hard to kill, ratio of out of action injuries:", ooa_ratio)
+  console.assert(knocked_ratio > 0.325 && knocked_ratio < 0.34, "1 unsaved wound with hard to kill, ratio of knocked down injuries is not 0.333")
+  console.assert(stunned_ratio > 0.495 && stunned_ratio < 0.505, "1 unsaved wound with hard to kill, ratio of stunned injuries is not 0.5")
+  console.assert(ooa_ratio > 0.16 && ooa_ratio < 0.175, "1 unsaved wound with hard to kill, ratio of out of action injuries is not 0.16667")
+
+  // No Pain
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_2.tags = ['no pain']
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  result = testInjuryPhase(warrior_1, warrior_2, attacks, 0, 1)
+  knocked_ratio = result.knocked_ratio
+  stunned_ratio = result.stunned_ratio
+  ooa_ratio = result.ooa_ratio
+  console.log("1 unsaved wound with no pain, ratio of knocked down injuries:", knocked_ratio)
+  console.log("1 unsaved wound with no pain, ratio of stunned injuries:", stunned_ratio)
+  console.log("1 unsaved wound with no pain, ratio of out of action injuries:", ooa_ratio)
+  console.assert(knocked_ratio > 0.66 && knocked_ratio < 0.675, "1 unsaved wound with no pain, ratio of knocked down injuries is not 0.6667")
+  console.assert(stunned_ratio == 0, "1 unsaved wound with no pain, ratio of stunned injuries is not 0")
+  console.assert(ooa_ratio > 0.325 && ooa_ratio < 0.34, "1 unsaved wound with no pain, ratio of out of action injuries is not 0.333")
 }
 
 const testToHitPhase = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {
