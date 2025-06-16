@@ -272,6 +272,25 @@ export const orderAttacksByInitiative = function (attacker, defender, round_numb
   return grouped_attacks
 }
 
+export const handleFear = function (warrior_1, warrior_2) {
+  const attacker = warrior_1.charger ? warrior_1 : warrior_2
+  const defender = warrior_1.charger ? warrior_2 : warrior_1
+  if (defender.tags.includes('fear') && !(attacker.tags.includes('immune to fear') || attacker.tags.includes('fear') || attacker.tags.includes('frenzy'))) {
+    const fear_roll = rollDice(2).reduce((a, b) => a + b)
+    if (fear_roll > attacker.leadership) {
+      defender.charger = true
+      attacker.charger = false
+      handleFear(warrior_2, warrior_1) // If the defender causes fear, the attacker can fail the charge
+    }
+  }
+  if (attacker.tags.includes('fear') && !(defender.tags.includes('immune to fear') || defender.tags.includes('fear') || defender.tags.includes('frenzy'))) {
+    const fear_roll = rollDice(2).reduce((a, b) => a + b)
+    if (fear_roll > defender.leadership) {
+      defender.feared = true
+    }
+  }
+}
+
 const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
   // Parse and stringify to create a deep copy of the objects
   let warrior_1 = JSON.parse(JSON.stringify(warrior_1_base))
@@ -281,6 +300,8 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
   let fight_done = false
   let first_round = true
   const fight_log = []
+
+  handleFear(warrior_1, warrior_2)
   
   while (!fight_done) {
     round_number += 1
@@ -301,9 +322,6 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
       fightCombatRound(attacker, defender, attack_group, first_round, house_rules)
     }
     
-    //[attacker, defender] = whoStrikesFirst(warrior_1, warrior_2, first_round, house_rules)
-    //const attackers_round = attacker.status == "standing" ? fightCombatRound(attacker, defender, first_round, house_rules) : {}
-    //const defenders_round = defender.status == "standing" ? fightCombatRound(defender, attacker, first_round, house_rules) : {}
     if (debug) console.log("End of round statuses", warrior_1.status, warrior_2.status, "fight done?", warrior_1.status == "out of action" || warrior_2.status == "out of action")
 
     // If any warrior is OOA the combat is over.
@@ -315,6 +333,9 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
 
     fight_log.push({'round': round_number, w1s: warrior_1.status, w2s: warrior_2.status, grouped_attacks: JSON.parse(JSON.stringify(grouped_attacks))})
     warrior_1.charger = false // Reset the charger status for the next round
+    warrior_2.charger = false // Reset the charger status for the next round
+    warrior_1.feared = false // Reset the feared status for the next round
+    warrior_2.feared = false // Reset the feared status for the next round
   }
   if (debug) console.log(fight_log)
   const winner = warrior_1.status == "out of action" ? warrior_2 : warrior_1
@@ -370,6 +391,7 @@ const createWarriorFromForm = function (name, formData) {
     tags: formData.tags,
     skills: formData.skills,
     frenzy: formData.tags.includes('frenzy'),
+    feared: false,
   }
 
   return warrior
@@ -396,6 +418,9 @@ const rollDice = function (number_of_dice) {
 }
 
 const toHit = function (attacker_ws, defender_ws) {
+  if (attacker_ws.feared) {
+    return 6
+  }
   if (attacker_ws > defender_ws) {
       return 3
   }
@@ -409,7 +434,7 @@ const toHitRanged = function (attacker_bs) {
   return 7 - attacker_bs
 }
 
-const rollToHit = function (attack, defender, house_rules={
+const rollToHit = function (attack, attacker, defender, house_rules={
   minus1ToHitOffhand: false,
   minus2ToHitOffhand: false,
   minusToHitOffhand: 0,
@@ -425,11 +450,11 @@ const rollToHit = function (attack, defender, house_rules={
     if (debug) console.log("defender " + defender.old_status + ", auto hit", attack)
   } else {
     attack.to_hit_roll = rollDice(1)[0]
-    attack.to_hit_roll += weapon.hit_mod ? weapon.hit_mod : 0 
-
     if (attack.to_hit_roll == 6 && weapon.tags.includes('poisoned') && !defender.tags.includes('immune to poison')) {
       attack.poison_proc = true
     }
+    attack.to_hit_roll += weapon.hit_mod ? weapon.hit_mod : 0 
+
     
     // Apply offhand house rules, if active
     if (offhand && minusToHitOffhand > 0) {
@@ -445,7 +470,7 @@ const rollToHit = function (attack, defender, house_rules={
       attack.hit = attack.to_hit_roll >= toHitRanged(attack.bs)
     } else {
       // Check if the to hit roll is higher than the target to hit value
-      attack.hit = attack.to_hit_roll >= toHit(attack.ws, defender.ws)
+      attack.hit = attack.to_hit_roll >= toHit(attack.ws, defender.ws, attacker)
     }
     if (!attack.hit) {
       attack.result = "Missed"
@@ -464,9 +489,9 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
   
   // Initiate variables, these will be updated in the to hit, to wound and armour save phases
   for (const attack of attack_group) {
-    rollToHit(attack, defender, house_rules)
+    rollToHit(attack, attacker, defender, house_rules)
     if (!attack.hit && attack.reroll_misses) {
-      rollToHit(attack, defender, house_rules)
+      rollToHit(attack, attacker, defender, house_rules)
     }
   }
 

@@ -1,4 +1,4 @@
-import { toHitPhase, toWoundPhase, injuryPhase, doRecovery, setUpAttacks, orderAttacksByInitiative } from './combat.js';
+import { toHitPhase, toWoundPhase, injuryPhase, doRecovery, setUpAttacks, orderAttacksByInitiative, handleFear } from './combat.js';
 import { weapons, armour, ranged_weapons } from './equipment.js';
 
 export const runTests = () => {
@@ -10,6 +10,7 @@ export const runTests = () => {
     attacks: 1,
     wounds: 1,
     initiative: 3,
+    leadership: 7,
     status: "standing",
     weapons_mainhand: [weapons['handweapon']],
     weapons_offhand: [],
@@ -30,6 +31,7 @@ export const runTests = () => {
     attacks: 1,
     wounds: 1,
     initiative: 3,
+    leadership: 7,
     status: "standing",
     weapons_mainhand: [weapons['handweapon']],
     weapons_offhand: [],
@@ -949,6 +951,57 @@ export const runTests = () => {
   console.assert(knocked_ratio > 0.66 && knocked_ratio < 0.675, "1 unsaved wound with no pain, ratio of knocked down injuries is not 0.6667")
   console.assert(stunned_ratio == 0, "1 unsaved wound with no pain, ratio of stunned injuries is not 0")
   console.assert(ooa_ratio > 0.325 && ooa_ratio < 0.34, "1 unsaved wound with no pain, ratio of out of action injuries is not 0.333")
+
+  // Fear
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.charger = true
+  warrior_2.tags = ['fear']
+  result = testHandleFear(warrior_1, warrior_2);
+  console.log("Fear should cause a Ld7 charger to fail the charge 41.66% of the time", result.failed_charges_ratio)
+  console.assert(result.failed_charges_ratio > 0.41 && result.failed_charges_ratio < 0.425, "Fear does not cause a Ld7 charger to fail the charge 41.66% of the time")
+
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_2.charger = true
+  warrior_2.tags = ['fear']
+  result = testHandleFear(warrior_1, warrior_2);
+  console.log("An Ld7 warrior getting charged by a fearcauser should be feared 41.66% of the time", result.feared_ratio)
+  console.assert(result.feared_ratio > 0.41 && result.feared_ratio < 0.425, "An Ld7 warrior getting charged by a fearcauser is not feared 41.66% of the time")
+
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.tags = ['frenzy']
+  warrior_1.charger = true
+  warrior_2.tags = ['fear']
+  result = testHandleFear(warrior_1, warrior_2);
+  console.log("Fear should cause a Ld7 charger with frenzy to fail the charge 0% of the time", result.failed_charges_ratio)
+  console.assert(result.failed_charges_ratio == 0, "Fear does not cause a Ld7 charger with frenzy to fail the charge 0% of the time")
+
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.tags = ['frenzy']
+  warrior_2.charger = true
+  warrior_2.tags = ['fear']
+  result = testHandleFear(warrior_1, warrior_2);
+  console.log("An Ld7 warrior with frenzy getting charged by a fearcauser should be feared 0% of the time", result.feared_ratio)
+  console.assert(result.feared_ratio == 0, "An Ld7 warrior getting charged by a fearcauser is not feared 0% of the time")
+}
+
+const testHandleFear = (warrior_1_base, warrior_2_base, number_of_simulations=100000) => {
+  let failed_charges = 0;
+  let feared = 0;
+  for (let i = 0; i < number_of_simulations; i++) {
+    const warrior1 = JSON.parse(JSON.stringify(warrior_1_base))
+    const warrior2 = JSON.parse(JSON.stringify(warrior_2_base))
+    handleFear(warrior1, warrior2);
+    if (!warrior1.charger && warrior2.charger) failed_charges += 1;
+    if (warrior1.feared) feared += 1;
+  }
+  return {
+    failed_charges_ratio: failed_charges / number_of_simulations,
+    feared_ratio: feared / number_of_simulations
+  }
 }
 
 const testToHitPhase = (warrior_1_base, warrior_2_base, attack_group_base, number_of_simulations=100000) => {
@@ -1109,6 +1162,7 @@ const resetWarrior = (warrior) => {
     attacks: 1,
     wounds: 1,
     initiative: 3,
+    leadership: 7,
     status: "standing",
     old_status: "standing",
     weapons_mainhand: [weapons['handweapon']],

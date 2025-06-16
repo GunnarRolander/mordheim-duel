@@ -198,13 +198,6 @@ export const skills = [
         category: 'strength',
     },
     {
-        name: 'fearsome',
-        label: 'Fearsome',
-        tags: [],
-        category: 'strength',
-        disabled: true
-    },
-    {
         name: 'strongman',
         label: 'Strongman',
         tags: [],
@@ -234,10 +227,10 @@ export const skills = [
 export const psychology = [
     {
         name: 'fear',
-        label: 'Fear',
+        label: 'Fear (?)',
         tags: [],
         category: 'psychology',
-        disabled: true
+        tooltip: 'If the charger is feared, the fear-causer will become the charger instead.'
     },
     {
         name: 'frenzy',

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { weapons, armour, ranged_weapons, skills, psychology, abilities } from './equipment.js';
 import ArmourComponent from './ArmourComponent.jsx';
 import Accordion from './components/accordion.jsx';
+import TagList from './components/taglist.jsx';
 
 const WarriorComponent = ({ handleWarriorChange }) => {
     const [formData, setFormData] = useState({
@@ -134,112 +135,43 @@ const WarriorComponent = ({ handleWarriorChange }) => {
         <Accordion
             title="Combat skills"
         >
-            {skills.filter((skill) => skill.category == 'combat').map(skill => (
-                <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`skill-${skill}`}>{skill.label}{skill.disabled && " (not implemented yet)"}</label>
-                    </div>
-                    <div>
-                    <input
-                        type="checkbox"
-                        name={skill.name}
-                        checked={formData.skills.includes(skill.name)}
-                        onChange={handleSkillsChange}
-                        id={`skill-${skill.name}`}
-                        style={{ float: 'right' }}
-                        disabled ={skill.disabled || false} // Disable skill if specified
-                    />
-                    </div>
-                </div>
-            ))}
+            <TagList
+                tags={skills.filter((skill) => skill.category == 'combat')}
+                formData={formData}
+                handleTagChange={handleTagChange}
+            />
         </Accordion>
         <Accordion
             title="Strength skills"
         >
-            {skills.filter((skill) => skill.category == 'strength').map(skill => (
-                <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`skill-${skill}`}>{skill.label}{skill.disabled && " (not implemented yet)"}</label>
-                    </div>
-                    <div>
-                    <input
-                        type="checkbox"
-                        name={skill.name}
-                        checked={formData.skills.includes(skill.name)}
-                        onChange={handleSkillsChange}
-                        id={`skill-${skill.name}`}
-                        style={{ float: 'right' }}
-                        disabled ={skill.disabled || false} // Disable skill if specified
-                    />
-                    </div>
-                </div>
-            ))}
+            <TagList
+                tags={skills.filter((skill) => skill.category == 'strength')}
+                formData={formData}
+                handleTagChange={handleTagChange}
+            />
         </Accordion>
         <Accordion
             title="Speed skills"
         >
-            {skills.filter((skill) => skill.category == 'speed').map(skill => (
-                <div key={skill.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`skill-${skill}`}>{skill.label}{skill.disabled && " (not implemented yet)"}</label>
-                    </div>
-                    <div>
-                    <input
-                        type="checkbox"
-                        name={skill.name}
-                        checked={formData.skills.includes(skill.name)}
-                        onChange={handleSkillsChange}
-                        id={`skill-${skill.name}`}
-                        style={{ float: 'right' }}
-                        disabled ={skill.disabled || false} // Disable skill if specified
-                    />
-                    </div>
-                </div>
-            ))}
+            <TagList
+                tags={skills.filter((skill) => skill.category == 'speed')}
+                formData={formData}
+                handleTagChange={handleTagChange}
+            />
         </Accordion>
-        <Accordion
-            title="Psychology"
-        >
-            {psychology.map(tag => (
-                <div key={tag.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`tag-${tag}`}>{tag.label}{tag.disabled && " (not implemented yet)"}</label>
-                    </div>
-                    <div>
-                    <input
-                        type="checkbox"
-                        name={tag.name}
-                        checked={formData.tags.includes(tag.name)}
-                        onChange={handleTagChange}
-                        id={`tag-${tag.name}`}
-                        style={{ float: 'right' }}
-                        disabled ={tag.disabled || false}
-                    />
-                    </div>
-                </div>
-            ))}
+        <Accordion title="Psychology" >
+            <TagList
+                tags={psychology}
+                formData={formData}
+                handleTagChange={handleTagChange}
+            />
         </Accordion>
-        <Accordion
-            title="Abilities/Attributes"
-        >
-            {abilities.map(tag => (
-                <div key={tag.name} style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <div style={{ textAlign: 'left'}}>
-                        <label htmlFor={`tag-${tag}`}>{tag.label}{tag.disabled && " (not implemented yet)"}</label>
-                    </div>
-                    <div>
-                    <input
-                        type="checkbox"
-                        name={tag.name}
-                        checked={formData.tags.includes(tag.name)}
-                        onChange={handleTagChange}
-                        id={`tag-${tag.name}`}
-                        style={{ float: 'right' }}
-                        disabled ={tag.disabled || false}
-                    />
-                    </div>
-                </div>
-            ))}
+        <Accordion title="Abilities/Attributes">
+            <TagList
+                tags={abilities}
+                formData={formData}
+                handleTagChange={handleTagChange}
+            />
         </Accordion>
       </form>
     );
