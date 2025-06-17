@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from 'react';
-import { weapons, armour, ranged_weapons, skills, psychology, abilities } from './equipment.js';
+import { weapons, armour, ranged_weapons, skills, psychology, abilities, mutations } from './equipment.js';
 import ArmourComponent from './ArmourComponent.jsx';
 import Accordion from './components/accordion.jsx';
 import TagList from './components/taglist.jsx';
@@ -172,6 +172,16 @@ const WarriorComponent = ({ handleWarriorChange }) => {
                 formData={formData}
                 handleTagChange={handleTagChange}
             />
+        </Accordion>
+        <Accordion title="Mutations">
+            <>
+                <b>WIP, might be unreliable</b>
+                <TagList
+                    tags={mutations}
+                    formData={formData}
+                    handleTagChange={handleTagChange}
+                />
+            </>
         </Accordion>
       </form>
     );

@@ -280,3 +280,33 @@ export const abilities = [
     }
 ]
 
+export const mutations = [
+    {
+        name: 'great claw',
+        label: 'Great Claw',
+    },
+    {
+        name: 'tentacle',
+        label: 'Tentacle',
+        disabled: true
+    },
+    {
+        name: 'blackblood',
+        label: 'Blackblood',
+        disabled: true
+    },
+    {
+        name: 'spines',
+        label: 'Spines',
+    },
+    {
+        name: 'scorpion tail',
+        label: 'Scorpion Tail',
+    },
+    {
+        name: 'extra arm',
+        label: 'Extra Arm',
+        disabled: true
+    },
+]
+

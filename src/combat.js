@@ -5,6 +5,7 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
   minus1ToHitOffhand: false,
   minus2ToHitOffhand: false,
   minusToHitOffhand: 0,
+  minusToStrengthOffhand: 0,
   minusToHitDW: false,
   addWSToParry: false,
   ogSpears: false
@@ -75,7 +76,8 @@ const createWeaponBase = function (attacker, defender, ws) {
     parry_roll: 0,
     parryable: true,
     ap: 0,
-    reroll_misses: false
+    reroll_misses: false,
+    tags: [],
   }
 }
 // To handle different initiative attacks, set up the attack slots for each warrior
@@ -163,6 +165,33 @@ export const setUpAttacks = function (attacker, defender, round_number) {
     weapons_equipped_this_round.push(attacker.weapons_offhand[0])
   }
 
+  if (attacker.tags.includes('great claw')) {
+    attacker.attack_slots.push({
+      ...createWeaponBase(attacker, defender, ws), 
+      weapon: weapons['handweapon'],
+      strength: attacker.strength + 1, // Great claw gives +1 strength
+    })
+  }
+
+  if (attacker.tags.includes('scorpion tail')) {
+    attacker.attack_slots.push({
+      ...createWeaponBase(attacker, defender, ws), 
+      weapon: weapons['handweapon'],
+      strength: defender.tags.includes('immune to poison') ? 2 : 5, // Scorpion tail has S2 or S5 depending on if the defender is immune to poison
+    })
+  }
+
+  if (attacker.tags.includes('spines')) {
+    attacker.attack_slots.push({
+      ...createWeaponBase(attacker, defender, ws), 
+      weapon: weapons['handweapon'],
+      strength: 1, // Spines has S1
+      initiative: 199,
+      tags: ['spines', 'auto hit', 'always active']
+    })
+  }
+
+  // Handle 1st round special cases
   if (round_number == 1) {
     for (const weapon of weapons_equipped_this_round) {
       if (weapon.tags.includes('whipcrack')) {
@@ -194,6 +223,9 @@ const setInitiativeOfAttacks = function (attack, warrior, round_number) {
   let initiative = attack.initiative
   initiative += attack.weapon.init_mod ? attack.weapon.init_mod : 0
 
+  if (attack.tags.includes('spines')) {
+    return initiative
+  }
   
   // If the weapon of an attack has a tag that indicates it should strike first, set the initiative to 99
   if ((attack.weapon.tags.includes('strike first') || warrior.charger || warrior.tags.includes('lightning reflexes')) && round_number == 1) {
@@ -345,10 +377,12 @@ const simulateCombat = function (warrior_1_base, warrior_2_base, house_rules) {
 const fightCombatRound = function (attacker, defender, attack_group, first_round, house_rules) {
   if (attacker.status != "standing" || (attacker.stupid && !attacker.frenzy)) {
     for (const attack of attack_group) {
-      attack.result = "Attacker is not standing, skipping attack"
-      if (debug) console.log(attacker.name + " is not standing, skipping attack")
+      if (!attack.tags.includes('always active')) {
+        attack.result = "Attacker is not standing, skipping attack"
+        if (debug) console.log(attacker.name + " is not standing, skipping attack")
+        attack.skip = true
+      }
     }
-    return attack_group
   }  
 
   toHitPhase(attacker, defender, attack_group, house_rules)
@@ -443,7 +477,7 @@ const rollToHit = function (attack, attacker, defender, house_rules={
   const {minusToHitOffhand, minusToHitDW} = house_rules
   const weapon = attack.weapon
   const offhand = attack.offHand
-  if (defender.old_status == "knocked down" || defender.old_status == "stunned") {
+  if (defender.old_status == "knocked down" || defender.old_status == "stunned" || attacker.tags.includes('auto hit')) {
     attack.to_hit_roll = ['auto hit']
     attack.hit = true
     if (debug) console.log("defender " + defender.old_status + ", auto hit", attack)
@@ -460,7 +494,7 @@ const rollToHit = function (attack, attacker, defender, house_rules={
       attack.to_hit_roll = attack.to_hit_roll - minusToHitOffhand
     }
     // If double weapon house rule is active, subtract 1 from all to hit roll
-    if (minusToHitDW && attacker.weapons.length > 1) {
+    if (minusToHitDW && attacker.weapons_offhand.length > 0) {
       attack.to_hit_roll = attack.to_hit_roll - 1
     }
     
@@ -488,6 +522,10 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
   
   // Initiate variables, these will be updated in the to hit, to wound and armour save phases
   for (const attack of attack_group) {
+    if (attack.skip) {
+      attack.hit = false
+      continue
+    }
     rollToHit(attack, attacker, defender, house_rules)
     if (!attack.hit && attack.reroll_misses) {
       rollToHit(attack, attacker, defender, house_rules)
@@ -526,8 +564,9 @@ export const toHitPhase = function (attacker, defender, attack_group, house_rule
       highest_hit_roll_attack.result = "Parried"
     }
   }
-
-  defender.parry_used = true
+  if (!attack_group[0].tags.includes('spines')) {
+    defender.parry_used = true
+  }
 
   return attack_group
 }
@@ -556,7 +595,10 @@ const toWound = function (strength, toughness) {
   return target_value
 }
 
-export const toWoundPhase = function (attacker, defender, attack_group, first_round, no_crits = false, house_rules = {}) {
+export const toWoundPhase = function (attacker, defender, attack_group, first_round, no_crits = false, house_rules = {
+  minusStrengthToOffhand: 0
+}) {
+  const {minusStrengthToOffhand} = house_rules
   for (const attack of attack_group.filter((attack) => attack.hit)) {
     if (defender.old_status == "stunned") {
       attack.to_wound_roll = 'coup de grace'
@@ -580,6 +622,10 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
     if (weapon?.tags.includes('first round bonus') && !first_round) {
       strength = attack.strength
     }
+
+    if (attack.offHand) {
+      strength -= minusStrengthToOffhand
+    }
     
     // Handle Mighty Blow skill
     if (attacker.tags.includes('mighty blow') && attack.weapon.name.substring(attack.weapon.name.length-6) != 'pistol') {
@@ -594,8 +640,7 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
     }
 
     attack.to_wound_roll = rollDice(1)[0]
-    attack.crit = attack.to_wound_roll == 6 && ableToCrit(strength, defender.toughness) && !attacker.crit_this_turn && !no_crits
-
+    attack.crit = attack.to_wound_roll == 6 && ableToCrit(strength, defender.toughness) && !attacker.crit_this_turn && !no_crits && !attack.tags.includes('spines')
     
     // Sigmarite hammers and blessed weapons
     if (weapon.tags.includes('holy') && (defender.tags.includes('undead') || defender.tags.includes('possessed'))) {
@@ -755,6 +800,7 @@ export const doRecovery = function (warrior, your_turn) {
   }
   warrior.old_status = warrior.status
   warrior.crit_this_turn = false
+  warrior.parry_used = false
 
   if (warrior.tags.includes('stupidity')) {
     warrior.stupid = rollDice(2).reduce((acc, val) => acc + val, 0) <= warrior.leadership
