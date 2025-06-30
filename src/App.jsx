@@ -136,7 +136,7 @@ function App() {
           </button>
         </Accordion>
         <Accordion title="Pit Fighter Betting">
-          <Bet winrate1={winRates.win_rate_warrior_1 || 0.5} winrate2={winRates.win_rate_warrior_2 || 0.5} />
+          <Bet winrate1={winRates.win_rate_warrior_1 || 50} winrate2={winRates.win_rate_warrior_2 || 50} />
         </Accordion>
       </div>
     </>
