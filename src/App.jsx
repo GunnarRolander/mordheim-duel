@@ -5,6 +5,7 @@ import WarriorComponent from './WarriorComponent.jsx';
 import { runTests } from './tests.js';
 import WinRateBar from './WinRateBar.jsx';
 import Accordion from './components/accordion.jsx';
+import Bet from './components/bet.jsx';
 
 function App() {
   const [warrior1, setWarrior1] = useState()
@@ -133,6 +134,9 @@ function App() {
           <button onClick={() => runUnitTests()}>
             run unit tests
           </button>
+        </Accordion>
+        <Accordion title="Pit Fighter Betting">
+          <Bet winrate1={winRates.win_rate_warrior_1 || 0.5} winrate2={winRates.win_rate_warrior_2 || 0.5} />
         </Accordion>
       </div>
     </>
