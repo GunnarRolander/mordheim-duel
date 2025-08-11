@@ -419,7 +419,7 @@ const createWarriorFromForm = function (name, formData) {
     weapons_offhand: equipped_weapons_offhand,
     weapons: equipped_weapons.concat(equipped_weapons_offhand),
     armour: equipped_armour,
-    armour_save: formData.armourSave,
+    armour_save: parseInt(formData.armourSave),
     charger: formData.charger,
     stood_up: false,
     tags: formData.tags,
@@ -704,6 +704,11 @@ export const injuryPhase = function (attacker, defender, attack_group) {
       defender.status = "out of action"
       if (debug) console.log("defender stunned - taken OOA")
     } else { 
+      if (defender.tags.includes('blackblood')) {
+        for (let i = 0; i < attack.unsaved_wounds; i++) {
+          triggerBlackblood(defender, attacker)
+        }
+      }
       if (defender.old_status == "knocked down" && attack.unsaved_wounds > 0) {
         attack.injury_roll = 'knocked, squished'
         attack.injury = "out of action"
@@ -805,4 +810,19 @@ export const doRecovery = function (warrior, your_turn) {
   if (warrior.tags.includes('stupidity')) {
     warrior.stupid = rollDice(2).reduce((acc, val) => acc + val, 0) <= warrior.leadership
   }
+}
+
+const triggerBlackblood = function (attacker, defender) {
+  const attack_group = [{
+    ...createWeaponBase(attacker, defender, attacker.ws),
+    weapon: weapons['handweapon'],
+    strength: 3,
+    hit: true
+  }]
+
+  toWoundPhase(attacker, defender, attack_group, false, true)
+
+  injuryPhase(attacker, defender, attack_group)
+
+  return attack_group
 }

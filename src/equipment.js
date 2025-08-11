@@ -292,8 +292,7 @@ export const mutations = [
     },
     {
         name: 'blackblood',
-        label: 'Blackblood',
-        disabled: true
+        label: 'Blackblood'
     },
     {
         name: 'spines',
