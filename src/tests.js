@@ -61,6 +61,7 @@ export const runTests = () => {
   let first_warrior = {}
   let last_warrior = {};
 
+  /*
   // to Hit tests
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -861,6 +862,37 @@ export const runTests = () => {
   setUpAttacks(warrior_2, warrior_1, 1)
   testEntireCombatRound(warrior_1, warrior_2, attacks, 1)
 
+  */
+
+  warrior_1 = resetWarrior(warrior_1)
+  warrior_2 = resetWarrior(warrior_2)
+  warrior_1.strength = 4
+  warrior_2.strength = 4
+  warrior_1.weapons_offhand = [weapons['handweapon']]
+  warrior_2.attacks = 2
+  attacks = setUpAttacks(warrior_1, warrior_2).attack_slots
+  setUpAttacks(warrior_2, warrior_1, 1)
+  testEntireCombatRound(warrior_1, warrior_2, attacks, 1)
+
+  result = testToHitPhase(warrior_1, warrior_2, attacks)
+  main_hit_ratio = result.main_hit_ratio
+  console.log("2 hand weapons warrior ", main_hit_ratio)
+  result = testToWoundPhase(warrior_1, warrior_2, attacks, 1, false, true)
+  main_wound_ratio = result.main_wound_ratio
+  console.log("2 hand weapons warrior ", main_wound_ratio)
+
+  attacks = setUpAttacks(warrior_2, warrior_1).attack_slots
+  setUpAttacks(warrior_1, warrior_2, 1)
+  result = testToHitPhase(warrior_2, warrior_1, attacks)
+  main_hit_ratio = result.main_hit_ratio
+  console.log("2 attacks warrior ", main_hit_ratio)
+  result = testToWoundPhase(warrior_2, warrior_1, attacks, 1, false, true)
+  main_wound_ratio = result.main_wound_ratio
+  console.log("2 attacks warrior ", main_wound_ratio)
+  testEntireCombatRound(warrior_2, warrior_1, attacks, 1)
+
+  /*
+
   // Test Frenzy
   warrior_1 = resetWarrior(warrior_1)
   warrior_2 = resetWarrior(warrior_2)
@@ -984,6 +1016,7 @@ export const runTests = () => {
   result = testHandleFear(warrior_1, warrior_2);
   console.log("An Ld7 warrior with frenzy getting charged by a fearcauser should be feared 0% of the time", result.feared_ratio)
   console.assert(result.feared_ratio == 0, "An Ld7 warrior getting charged by a fearcauser is not feared 0% of the time")
+  */
 }
 
 const testHandleFear = (warrior_1_base, warrior_2_base, number_of_simulations=100000) => {

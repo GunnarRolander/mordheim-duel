@@ -624,7 +624,7 @@ export const toWoundPhase = function (attacker, defender, attack_group, first_ro
     }
 
     if (attack.offHand) {
-      strength -= minusStrengthToOffhand
+      strength -= minusStrengthToOffhand || 0
     }
     
     // Handle Mighty Blow skill
