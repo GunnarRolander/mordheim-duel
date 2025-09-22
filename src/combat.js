@@ -5,7 +5,7 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
   minus1ToHitOffhand: false,
   minus2ToHitOffhand: false,
   minusToHitOffhand: 0,
-  minusToStrengthOffhand: 0,
+  minusStrengthToOffhand: 0,
   minusToHitDW: false,
   addWSToParry: false,
   ogSpears: false
@@ -13,6 +13,7 @@ export const runSimulateCombat = function (warrior1, warrior2, house_rules={
   house_rules.minusToHitOffhand = 0
   if (house_rules.minus1ToHitOffhand) house_rules.minusToHitOffhand = 1
   if (house_rules.minus2ToHitOffhand) house_rules.minusToHitOffhand = 2
+  house_rules.minusStrengthToOffhand = house_rules.minusStrengthToOffhand ? 1 : 0
 
   const warrior_1 = createWarriorFromForm("warrior_1", warrior1)
   const warrior_2 = createWarriorFromForm("warrior_2", warrior2)
@@ -598,7 +599,7 @@ const toWound = function (strength, toughness) {
 export const toWoundPhase = function (attacker, defender, attack_group, first_round, no_crits = false, house_rules = {
   minusStrengthToOffhand: 0
 }) {
-  const {minusStrengthToOffhand} = house_rules
+  let {minusStrengthToOffhand} = house_rules
   for (const attack of attack_group.filter((attack) => attack.hit)) {
     if (defender.old_status == "stunned") {
       attack.to_wound_roll = 'coup de grace'

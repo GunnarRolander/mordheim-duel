@@ -3,6 +3,7 @@ import './App.css'
 import { runSimulateCombat } from './combat.js';
 import WarriorComponent from './WarriorComponent.jsx';
 import { runTests } from './tests.js';
+import { runBatch } from './batch.js';
 import WinRateBar from './WinRateBar.jsx';
 import Accordion from './components/accordion.jsx';
 import Bet from './components/bet.jsx';
@@ -17,6 +18,7 @@ function App() {
   const [houseRules, setHouseRules] = useState({
     minus1ToHitOffhand: false,
     minus2ToHitOffhand: false,
+    minusStrengthToOffhand: false,
     minusToHitDW: false,
     addWSToParry: false,
     ogSpears: false,
@@ -59,6 +61,14 @@ function App() {
     setSpinnerVisible(true); // Show spinner before starting the simulation
     setTimeout(() => {
       runTests();
+      setSpinnerVisible(false); // Hide spinner after the simulation is done
+    }, 100); // Allow React to update the spinner state before running the simulation    
+  }
+
+  const runBatches = () => {
+    setSpinnerVisible(true); // Show spinner before starting the simulation
+    setTimeout(() => {
+      runBatch();
       setSpinnerVisible(false); // Hide spinner after the simulation is done
     }, 100); // Allow React to update the spinner state before running the simulation    
   }
@@ -111,6 +121,7 @@ function App() {
               <div style={{ textAlign: 'left'}}>
                 <label>Minus -1 to hit on offhand attack when dualwielding</label><br/>
                 <label>Minus -2 to hit on offhand attack when dualwielding</label><br/>
+                <label>Minus -1 Strength on offhand attack when dualwielding</label><br/>
                 <label>Minus -1 to hit on all attacks when dualwielding</label><br/>
                 <label>Add WS to parry rolls</label><br/>
                 <label>Use original spear rules</label><br/>
@@ -120,6 +131,7 @@ function App() {
               <div>
                 <input type="checkbox" name="minus1ToHitOffhand" checked={houseRules.minus1ToHitOffhand} onChange={handleRuleChange} /><br/>
                 <input type="checkbox" name="minus2ToHitOffhand" checked={houseRules.minus2ToHitOffhand} onChange={handleRuleChange} /><br/>
+                <input type="checkbox" name="minusStrengthToOffhand" checked={houseRules.minusStrengthToOffhand} onChange={handleRuleChange} /><br/>
                 <input type="checkbox" name="minusToHitDW" checked={houseRules.minusToHitDW} onChange={handleRuleChange} /><br/>
                 <input type="checkbox" name="addWSToParry" checked={houseRules.addWSToParry} onChange={handleRuleChange} /><br/>
                 <input type="checkbox" name="ogSpears" checked={houseRules.ogSpears} onChange={handleRuleChange} /><br/>
@@ -135,6 +147,12 @@ function App() {
             run unit tests
           </button>
         </Accordion>
+        {/*<Accordion title="Batch runs">
+          <p>Open the console to see the batch results (F12 or ctrl + shift + i)</p>
+          <button onClick={() => runBatches()}>
+            run batch
+          </button>
+        </Accordion>*/}
         <Accordion title="Pit Fighter Betting">
           <Bet winrate1={winRates.win_rate_warrior_1 || 50} winrate2={winRates.win_rate_warrior_2 || 50} />
         </Accordion>
